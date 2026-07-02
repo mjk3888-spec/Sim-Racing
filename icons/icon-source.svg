@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- LUMINARY ENDURANCE MANAGER app icon — Wildthings Racing brand system -->
+  <!-- Dark base #050505 · Volt #DFFF00 · Gulf Blue #8EC7E6 · Performance Orange #FF8A1C -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#121212"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g id="mark" transform="translate(-51,13)">
+    <!-- Italic L with swoosh foot -->
+    <polygon fill="#FFFFFF" points="252,76 324,76 232,296 468,257 448,294 152,352"/>
+    <!-- Speed chevrons: Gulf Blue, Volt, Performance Orange -->
+    <polygon fill="#8EC7E6" points="152,372 240,354 224,392 136,410"/>
+    <polygon fill="#DFFF00" points="264,349 352,331 336,369 248,387"/>
+    <polygon fill="#FF8A1C" points="376,326 484,300 434,346 360,364"/>
+  </g>
+</svg>
