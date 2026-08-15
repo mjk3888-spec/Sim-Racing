@@ -11,6 +11,14 @@
 
 const DC=[{n:'Brake Bias',k:'bb'},{n:'TC',k:'tc'}];
 const DEFAULT_CHECKS={pre:[{id:'p1',text:'Setup file loaded and saved',done:false},{id:'p2',text:'Fuel tank full before joining grid',done:false}],swap:[{id:'s1',text:'Confirm driver settings applied for incoming driver',done:false},{id:'s2',text:'Incoming driver at rig 10 min before pit window opens',done:false}],post:[{id:'o1',text:'Log best lap and fuel burn in testing notes',done:false},{id:'o2',text:'Note setup changes made during race',done:false}]};
+/* Shown in the footer so it is obvious at a glance whether a device is running
+   the current build or a stale cached one. Installed phones can keep serving an
+   old service worker cache long after a deploy, and "is my phone up to date?"
+   is otherwise unanswerable without devtools.
+   BUMP THIS TOGETHER WITH CACHE_VERSION IN sw.js ON EVERY RELEASE. */
+const APP_BUILD='2026-08-15.3';
+function showBuildStamp(){const e=el('build-stamp');if(e)e.textContent=APP_BUILD;}
+
 const DRV_COLORS=['#DFFF00','#8EC7E6','#FF8A1C','#39FF14','#C060E8','#FF6030'];
 
 // TIMEZONE DATA

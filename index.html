@@ -192,20 +192,23 @@
         </div>
         <div class="field"><label>Event Name</label><input id="cfg-name" data-action="config.save-check"></div>
         <div class="frow3">
+          <!-- Real <select> elements, NOT <datalist>. iOS Safari gives a datalist
+               no dropdown at all: suggestions only appear above the keyboard once
+               you start typing, which on a phone reads as a missing list. A select
+               gets a proper native picker. The "Other" option in each reveals the
+               text box beneath it, so anything not listed can still be entered.
+               All three are filled by buildCatalogLists() in js/catalog.js. -->
           <div class="field"><label>Car Class</label>
-            <input id="cfg-class" list="class-options" data-action="config.save" placeholder="Select or type...">
-            <!-- All three lists are filled by buildCatalogLists() in js/catalog.js.
-                 They are suggestions only: these stay plain inputs, so anything
-                 not listed can still be typed. -->
-            <datalist id="class-options"></datalist>
+            <select id="cfg-class-pick" data-action="config.class-pick"></select>
+            <input id="cfg-class" data-action="config.save" placeholder="Type class" style="display:none;margin-top:6px">
           </div>
           <div class="field"><label>Car</label>
-            <input id="cfg-car" list="car-options" data-action="config.car-picked" placeholder="Select or type...">
-            <datalist id="car-options"></datalist>
+            <select id="cfg-car-pick" data-action="config.car-pick"></select>
+            <input id="cfg-car" data-action="config.save" placeholder="Type car name" style="display:none;margin-top:6px">
           </div>
           <div class="field"><label>Track</label>
-            <input id="cfg-track" list="track-options" data-action="config.save" placeholder="Select or type...">
-            <datalist id="track-options"></datalist>
+            <select id="cfg-track-pick" data-action="config.track-pick"></select>
+            <input id="cfg-track" data-action="config.save" placeholder="Type track name" style="display:none;margin-top:6px">
           </div>
         </div>
       </div>
@@ -511,7 +514,7 @@
 </div>
 
 </div><!-- /main -->
-<div class="l08">L08 · V5</div>
+<div class="l08">L08 · V5 · build <span id="build-stamp">—</span></div>
 
 <!-- MODALS -->
 <div class="overlay" id="drv-overlay"><div class="modal">

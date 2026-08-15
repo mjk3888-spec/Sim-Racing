@@ -124,8 +124,8 @@ function loadDemoEvent() {
   persist();
 
   populateConfig();
-  buildCatalogLists();
   applySimMode();
+  buildCatalogLists();
   renderDriverList(); renderSettingsTable(); renderTNotes();
   renderChecklists(); renderGoals(); renderGoalsDash();
   renderSchedule(); buildAvail(); loadSchMeta();

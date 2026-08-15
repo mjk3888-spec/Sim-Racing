@@ -311,35 +311,75 @@ window.LUMTEST = (function () {
 
       // ---- CAR / TRACK PICK LISTS -----------------------------------------
       pg('config');
-      check('catalog: lists render into the datalists', () => {
-        const cars = document.querySelectorAll('#car-options option').length;
-        const trks = document.querySelectorAll('#track-options option').length;
-        const cls = document.querySelectorAll('#class-options option').length;
-        return (cars > 0 && trks > 0 && cls > 0) || `cars=${cars} tracks=${trks} class=${cls}`;
+      const pickVals = id => [...document.querySelectorAll('#' + id + ' option')]
+        .map(o => o.value).filter(v => v && v !== '__custom__');
+
+      check('catalog: all three pickers are real <select> elements', () => {
+        // Not <datalist>: iOS Safari renders a datalist with no dropdown at all.
+        return ['cfg-class-pick', 'cfg-car-pick', 'cfg-track-pick']
+          .every(id => $('#' + id) && $('#' + id).tagName === 'SELECT')
+          || 'a picker is not a select';
+      });
+      check('catalog: pickers are populated', () => {
+        const c = pickVals('cfg-car-pick').length, t = pickVals('cfg-track-pick').length,
+              k = pickVals('cfg-class-pick').length;
+        return (c > 0 && t > 0 && k > 0) || `cars=${c} tracks=${t} class=${k}`;
       });
       check('catalog: sim selection narrows the car list', () => {
-        S.config.sim = 'lmu'; buildCatalogLists();
-        const lmu = [...document.querySelectorAll('#car-options option')].map(o => o.value);
+        S.config.carClass = ''; S.config.sim = 'lmu'; buildCatalogLists();
+        const lmu = pickVals('cfg-car-pick');
         S.config.sim = 'iracing'; buildCatalogLists();
-        const ir = [...document.querySelectorAll('#car-options option')].map(o => o.value);
+        const ir = pickVals('cfg-car-pick');
         if (lmu.indexOf('BMW M4 GT3') >= 0) return 'iRacing-only car showing under LMU';
         if (ir.indexOf('Peugeot 9X8') >= 0) return 'LMU-only car showing under iRacing';
         if (lmu.indexOf('Porsche 963') < 0) return 'shared car missing from LMU list';
         return true;
       });
-      check('config.car-picked: choosing a known car fills its class', () => {
-        const car = $('#cfg-car');
-        car.value = 'Ferrari 296 GT3';
-        fire(car, 'input');
-        return ($('#cfg-class').value === 'GT3' && S.config.carClass === 'GT3')
-          || 'class=' + $('#cfg-class').value;
+      check('config.class-pick: choosing a class shortens the car list to it', () => {
+        S.config.sim = 'iracing';
+        const before = (S.config.carClass = '', buildCatalogLists(), pickVals('cfg-car-pick').length);
+        const sel = $('#cfg-class-pick');
+        sel.value = 'GTP';
+        fire(sel, 'change');
+        const after = pickVals('cfg-car-pick');
+        if (S.config.carClass !== 'GTP') return 'class not saved, got ' + S.config.carClass;
+        if (after.length >= before) return `list did not shrink: ${before} -> ${after.length}`;
+        const wrong = after.filter(n => {
+          const c = CAR_LIST.find(x => x.name === n);
+          return c && c.cls !== 'GTP';
+        });
+        return wrong.length === 0 || 'non-GTP cars left in list: ' + wrong.join(', ');
       });
-      check('config.car-picked: an unlisted car leaves the class alone', () => {
-        $('#cfg-class').value = 'GT3';
-        const car = $('#cfg-car');
-        car.value = 'Some Car Not In The List';
-        fire(car, 'input');
-        return $('#cfg-class').value === 'GT3' || 'class got clobbered to ' + $('#cfg-class').value;
+      check('config.car-pick: choosing a known car fills its class', () => {
+        S.config.carClass = ''; buildCatalogLists();
+        const sel = $('#cfg-car-pick');
+        sel.value = 'Ferrari 296 GT3';
+        fire(sel, 'change');
+        return (S.config.car === 'Ferrari 296 GT3' && S.config.carClass === 'GT3')
+          || `car=${S.config.car} class=${S.config.carClass}`;
+      });
+      check('pickers: Other reveals the text box for a custom value', () => {
+        const sel = $('#cfg-car-pick'), txt = $('#cfg-car');
+        sel.value = '__custom__';
+        fire(sel, 'change');
+        if (txt.style.display === 'none') return 'text box stayed hidden';
+        txt.value = 'Some Unlisted Car';
+        fire(txt, 'input');
+        return S.config.car === 'Some Unlisted Car' || 'got ' + S.config.car;
+      });
+      check('pickers: an unlisted saved value survives a rebuild', () => {
+        // A car typed by hand must not be silently dropped when the list rebuilds.
+        S.config.car = 'Some Unlisted Car';
+        buildCatalogLists();
+        return ($('#cfg-car-pick').value === '__custom__'
+             && $('#cfg-car').value === 'Some Unlisted Car'
+             && $('#cfg-car').style.display !== 'none')
+          || 'custom value lost on rebuild';
+      });
+      check('build stamp is rendered', () => {
+        showBuildStamp();
+        return ($('#build-stamp').textContent === APP_BUILD && !!APP_BUILD)
+          || 'got ' + $('#build-stamp').textContent;
       });
 
       // ---- LAP TIME AUTO-FORMAT -------------------------------------------

@@ -139,33 +139,86 @@ function catalogFor(list) {
   return list.filter(x => x.sim === 'both' || x.sim === sim);
 }
 
-function buildCatalogLists() {
-  const carDL = el('car-options');
-  if (carDL) {
-    carDL.innerHTML = catalogFor(CAR_LIST)
-      .map(c => `<option value="${c.name}">${c.cls}</option>`).join('');
-  }
-  const trkDL = el('track-options');
-  if (trkDL) {
-    trkDL.innerHTML = catalogFor(TRACK_LIST)
-      .map(t => `<option value="${t.name}"></option>`).join('');
-  }
-  const clsDL = el('class-options');
-  if (clsDL) {
-    clsDL.innerHTML = CAR_CLASSES.map(c => `<option value="${c}"></option>`).join('');
-  }
+/* Sentinel for the trailing "Other" option in every pick list. */
+const PICK_CUSTOM = '__custom__';
+
+/* Fills one <select> and wires it to the text box that backs it.
+
+   The text input is the CANONICAL value: sc() reads cfg-car / cfg-track /
+   cfg-class exactly as it always has, so nothing downstream had to change. The
+   select only drives that input. When the stored value is not in the list (an
+   older event, or a car typed by hand) the select lands on "Other" and the text
+   box is revealed already holding it, so nothing is ever silently lost. */
+function fillPick(pickId, textId, values, current) {
+  const pick = el(pickId), txt = el(textId);
+  if (!pick || !txt) return;
+  const cur = current || '';
+  const known = cur && values.indexOf(cur) >= 0;
+  pick.innerHTML =
+    '<option value="">— Select —</option>' +
+    values.map(v => `<option value="${v}">${v}</option>`).join('') +
+    `<option value="${PICK_CUSTOM}">Other / type it in</option>`;
+  pick.value = known ? cur : (cur ? PICK_CUSTOM : '');
+  txt.style.display = (cur && !known) ? '' : 'none';
+  txt.value = cur;
 }
 
-/* Picking a known car fills in its class. Only ever fills, never overwrites a
-   class the user set themselves to something different on purpose. */
-function onCarPicked() {
+/* Cars narrowed to the chosen class, which is the whole point: picking GTP
+   should not leave 47 cars in the picker. If a class has no cars in the current
+   sim's catalogue, fall back to the full list rather than an empty picker. */
+function carsForClass() {
+  const cls = (S.config.carClass || '').trim().toLowerCase();
+  const all = catalogFor(CAR_LIST);
+  if (!cls) return all.map(c => c.name);
+  const hit = all.filter(c => c.cls.toLowerCase() === cls);
+  return (hit.length ? hit : all).map(c => c.name);
+}
+
+function buildCatalogLists() {
+  fillPick('cfg-class-pick', 'cfg-class', CAR_CLASSES, S.config.carClass);
+  fillPick('cfg-car-pick', 'cfg-car', carsForClass(), S.config.car);
+  fillPick('cfg-track-pick', 'cfg-track', catalogFor(TRACK_LIST).map(t => t.name), S.config.track);
+}
+
+/* Shared by all three pickers: copy the choice into the backing text box, or
+   reveal that box for a custom entry. Returns the chosen value. */
+function applyPick(pickId, textId) {
+  const pick = el(pickId), txt = el(textId);
+  if (!pick || !txt) return '';
+  if (pick.value === PICK_CUSTOM) {
+    txt.style.display = '';
+    txt.value = '';
+    txt.focus();
+    sc();
+    return '';
+  }
+  txt.style.display = 'none';
+  txt.value = pick.value;
   sc();
-  const picked = gv('cfg-car').trim().toLowerCase();
-  if (!picked) return;
-  const hit = CAR_LIST.find(c => c.name.toLowerCase() === picked);
+  return pick.value;
+}
+
+function onClassPick() {
+  applyPick('cfg-class-pick', 'cfg-class');
+  // Narrow the car picker to the new class. Clear a car that no longer belongs.
+  const cars = carsForClass();
+  if (S.config.car && cars.indexOf(S.config.car) < 0) {
+    const known = CAR_LIST.some(c => c.name === S.config.car);
+    if (known) { sv('cfg-car', ''); sc(); }
+  }
+  fillPick('cfg-car-pick', 'cfg-car', cars, S.config.car);
+}
+
+/* Picking a car fills its class, which is the main time saver. Only ever fills
+   a blank or mismatched class, and then re-narrows the car list to match. */
+function onCarPick() {
+  const chosen = applyPick('cfg-car-pick', 'cfg-car');
+  if (!chosen) return;
+  const hit = CAR_LIST.find(c => c.name === chosen);
   if (!hit) return;
-  const current = gv('cfg-class').trim();
-  if (current && current.toLowerCase() === hit.cls.toLowerCase()) return;
+  if ((S.config.carClass || '').trim().toLowerCase() === hit.cls.toLowerCase()) return;
   sv('cfg-class', hit.cls);
   sc();
+  fillPick('cfg-class-pick', 'cfg-class', CAR_CLASSES, hit.cls);
+  fillPick('cfg-car-pick', 'cfg-car', carsForClass(), chosen);
 }

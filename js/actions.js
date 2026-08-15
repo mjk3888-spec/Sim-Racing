@@ -60,8 +60,10 @@ const ACTIONS = {
   'config.check':       { on: 'input',  run: () => checkPrereqs() },
   // Changing sim narrows the car and track pick lists to that sim's content.
   'config.sim-change':  { on: 'change', run: () => { sc(); applySimMode(); buildCatalogLists(); } },
-  // Picking a known car also fills in its class.
-  'config.car-picked':  { on: 'input',  run: () => onCarPicked() },
+  // Pick lists. Picking a class narrows the car list; picking a car fills its class.
+  'config.class-pick':  { on: 'change', run: () => onClassPick() },
+  'config.car-pick':    { on: 'change', run: () => onCarPick() },
+  'config.track-pick':  { on: 'change', run: () => applyPick('cfg-track-pick', 'cfg-track') },
   'config.pit':         { on: ['input', 'focusout'], run: (e, t) => lapFieldOr(e, t, () => sc()) },
   'config.hour-change': { on: 'change', run: () => { syncHourDrop(); sc(); checkPrereqs(); } },
   'config.dur-change':  { on: 'change', run: () => { syncDurDrop(); sc(); checkPrereqs(); } },
