@@ -45,11 +45,12 @@ side.
 ## File map
 
 ```
-index.html          markup shell only, ~40 KB
+index.html          markup shell only, ~42 KB
 styles/             tokens -> base -> components -> pages   (ORDER MATTERS)
-js/                 14 classic scripts                      (ORDER MATTERS)
+js/                 16 classic scripts                      (ORDER MATTERS)
   data.js           colours, checklists, timezone + country tables, flags
-  state.js          the S object, localStorage load/save
+  state.js          the S object, localStorage load/save, fmtLapInput
+  catalog.js        iRacing + LMU car and track pick lists
   config.js         time dropdowns, sim mode, prereqs, config form
   schedule.js       stint building, schedule table, availability grid
   dashboard.js      race clocks, handoff alerts + audio, fair share, pie
@@ -59,6 +60,7 @@ js/                 14 classic scripts                      (ORDER MATTERS)
   optimizer.js      stint schedule optimiser
   nav.js            tab navigation
   sync.js           broadcast sync client
+  demo.js           Load Sample Event: a complete race, already running
   actions.js        data-action registry + delegated dispatcher (Step 5)
   main.js           boot sequence - MUST LOAD LAST
   pwa.js            service worker registration + update toast
@@ -68,8 +70,8 @@ wrangler.toml       for a future Cloudflare Workers deploy, not yet used
 tools/              verification harness, see Verification standard below
   serve.ps1         static localhost server, .NET only, no node needed
   harness.js        deterministic seed + per-tab markup hashing
-  functional.js     37 real-DOM-event tests over the delegated wiring
-  baseline.json     hashes captured at tag v5-pre-delegation
+  functional.js     44 real-DOM-event tests over the delegated wiring
+  baseline.json     current expected hashes, with a note on every re-baseline
 .claude/launch.json starts tools/serve.ps1 on port 5173
 ```
 
@@ -164,6 +166,19 @@ Step 5 passed all six: markup identical on all six tabs plus strip and modals,
 66/66 functions reachable, 0 inline handlers, 0 unregistered actions, 0 unused
 registrations, 37/37 behaviour tests, 15/15 files parse.
 
+**Refactor versus feature, and which half of the harness applies.** These two
+kinds of change are checked differently and confusing them wastes a lot of time:
+
+- A **refactor** must not change rendered output. Step 2 is the real test and
+  every hash must match. That is what proved Step 5.
+- A **feature** is supposed to change output, so matching hashes would mean it
+  did nothing. Step 4, the behaviour tests, is the real test, and they must all
+  still pass. Then re-baseline and **write down in `tools/baseline.json` which
+  hashes moved and why**. If a hash moved that you cannot explain, stop.
+
+Step 5b was a feature change: 44/44 behaviour tests passed, and exactly four
+hashes moved, each traceable to a specific edit.
+
 ---
 
 ## Done so far
@@ -176,6 +191,7 @@ registrations, 37/37 behaviour tests, 15/15 files parse.
 | 3 | Split the 300-line `<style>` block into four stylesheets |
 | 4 | Split the 998-line `<script>` block into 13 files. index.html now 40 KB |
 | 5 | Replaced all 117 inline handlers with `data-action` + delegation. Tagged `v5-pre-delegation` first. Added `js/actions.js` and `tools/` |
+| 5b | Less typing: Load Sample Event button, car + track pick lists with class auto-fill, `inputmode` on every numeric field, lap time auto-format |
 
 Step 5 note: the old plan said "63 inline `onclick=` handlers" and "one
 delegated listener". The onclick count was right (47 in `index.html`, 16 in JS

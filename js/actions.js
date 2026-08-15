@@ -58,7 +58,11 @@ const ACTIONS = {
   'config.save-check':  { on: 'input',  run: () => { sc(); checkPrereqs(); } },
   'config.date-change': { on: 'change', run: () => { sc(); checkPrereqs(); } },
   'config.check':       { on: 'input',  run: () => checkPrereqs() },
-  'config.sim-change':  { on: 'change', run: () => { sc(); applySimMode(); } },
+  // Changing sim narrows the car and track pick lists to that sim's content.
+  'config.sim-change':  { on: 'change', run: () => { sc(); applySimMode(); buildCatalogLists(); } },
+  // Picking a known car also fills in its class.
+  'config.car-picked':  { on: 'input',  run: () => onCarPicked() },
+  'config.pit':         { on: ['input', 'focusout'], run: (e, t) => lapFieldOr(e, t, () => sc()) },
   'config.hour-change': { on: 'change', run: () => { syncHourDrop(); sc(); checkPrereqs(); } },
   'config.dur-change':  { on: 'change', run: () => { syncDurDrop(); sc(); checkPrereqs(); } },
   'config.ighr-change': { on: 'change', run: () => { syncIghrDrop(); sc(); } },
@@ -72,6 +76,9 @@ const ACTIONS = {
   'driver.lib-load':   { on: 'change', run: () => loadFromLib() },
   'driver.lib-remove': { run: () => removeFromLib() },
   'driver.tz-change':  { on: 'change', run: () => onTZChange() },
+  // Lap time boxes: reformat on focusout, re-check prerequisites as you type.
+  'driver.lap':        { on: ['input', 'focusout'], run: (e, t) => lapFieldOr(e, t, () => checkPrereqs()) },
+  'driver.lap-format': { on: 'focusout', run: (e, t) => { t.value = fmtLapInput(t.value); } },
 
   // ---- CAR SETTINGS TABLE --------------------------------------------------
   // Both focusout and change are registered, matching the original pair of
@@ -140,8 +147,10 @@ const ACTIONS = {
 
   // ---- PIT STRATEGY --------------------------------------------------------
   'cmp.calc':        { on: 'input', run: () => calcCompare() },
+  'cmp.lap':         { on: ['input', 'focusout'], run: (e, t) => lapFieldOr(e, t, () => calcCompare()) },
   'cmp.prefill':     { run: () => prefillCompare() },
   'fuel.calc':       { on: 'input', run: () => calcFuel() },
+  'fuel.lap':        { on: ['input', 'focusout'], run: (e, t) => lapFieldOr(e, t, () => calcFuel()) },
   'pit.calc':        { on: 'input', run: () => calcPit() },
   'pit.calc-change': { on: 'change', run: () => calcPit() },
 
@@ -169,9 +178,24 @@ const ACTIONS = {
   'check.toggle': { run: (e, t) => toggleCL(t.dataset.cat, +t.dataset.i) },
   'check.delete': { run: (e, t) => delCheck(t.dataset.cat, +t.dataset.i) },
 
+  // ---- SAMPLE DATA ---------------------------------------------------------
+  'demo.load': { run: () => loadDemoEvent() },
+
   // ---- GENERIC MODAL DISMISS ----------------------------------------------
   'modal.close': { run: (e, t) => { const o = el(t.dataset.target); if (o) o.classList.remove('on'); } }
 };
+
+/* Shared by every lap-time-shaped box. Recalculates live as you type, then
+   tidies the value into m:ss.fff once you leave the field. Same one-element-
+   one-action constraint as enterBlurOr below. */
+function lapFieldOr(e, t, onInput) {
+  if (e.type === 'focusout') {
+    const tidy = fmtLapInput(t.value);
+    if (tidy !== t.value) { t.value = tidy; onInput(); }
+    return;
+  }
+  onInput();
+}
 
 /* Shared by every text box that saved on blur and blurred on Enter. One action
    handles both events because one element cannot carry two data-action values. */

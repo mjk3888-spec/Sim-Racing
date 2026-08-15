@@ -309,6 +309,59 @@ window.LUMTEST = (function () {
         return $('#opt-result').textContent !== before || 'optimizer produced no output';
       });
 
+      // ---- CAR / TRACK PICK LISTS -----------------------------------------
+      pg('config');
+      check('catalog: lists render into the datalists', () => {
+        const cars = document.querySelectorAll('#car-options option').length;
+        const trks = document.querySelectorAll('#track-options option').length;
+        const cls = document.querySelectorAll('#class-options option').length;
+        return (cars > 0 && trks > 0 && cls > 0) || `cars=${cars} tracks=${trks} class=${cls}`;
+      });
+      check('catalog: sim selection narrows the car list', () => {
+        S.config.sim = 'lmu'; buildCatalogLists();
+        const lmu = [...document.querySelectorAll('#car-options option')].map(o => o.value);
+        S.config.sim = 'iracing'; buildCatalogLists();
+        const ir = [...document.querySelectorAll('#car-options option')].map(o => o.value);
+        if (lmu.indexOf('BMW M4 GT3') >= 0) return 'iRacing-only car showing under LMU';
+        if (ir.indexOf('Peugeot 9X8') >= 0) return 'LMU-only car showing under iRacing';
+        if (lmu.indexOf('Porsche 963') < 0) return 'shared car missing from LMU list';
+        return true;
+      });
+      check('config.car-picked: choosing a known car fills its class', () => {
+        const car = $('#cfg-car');
+        car.value = 'Ferrari 296 GT3';
+        fire(car, 'input');
+        return ($('#cfg-class').value === 'GT3' && S.config.carClass === 'GT3')
+          || 'class=' + $('#cfg-class').value;
+      });
+      check('config.car-picked: an unlisted car leaves the class alone', () => {
+        $('#cfg-class').value = 'GT3';
+        const car = $('#cfg-car');
+        car.value = 'Some Car Not In The List';
+        fire(car, 'input');
+        return $('#cfg-class').value === 'GT3' || 'class got clobbered to ' + $('#cfg-class').value;
+      });
+
+      // ---- LAP TIME AUTO-FORMAT -------------------------------------------
+      check('fmtLapInput: keypad digits become lap times', () => {
+        const want = {
+          '218': '2:18', '218.543': '2:18.543', '21854': '2:18.54',
+          '218543': '2:18.543', '1385': '1:38.5', '1230': '12:30',
+          '2:18.5': '2:18.5', '': '', 'abc': 'abc', '1999': '1999'
+        };
+        const bad = Object.keys(want).filter(k => fmtLapInput(k) !== want[k]);
+        return bad.length === 0 || bad.map(k => `${k}->${fmtLapInput(k)} want ${want[k]}`).join('; ');
+      });
+      check('driver.lap: FOCUSOUT reformats the box in place', () => {
+        click($('[data-action="driver.add"]'));
+        const inp = $('#dm-lap');
+        inp.value = '218543';
+        focusout(inp);
+        const got = inp.value;
+        click($('[data-action="driver.close"]'));
+        return got === '2:18.543' || 'got ' + got;
+      });
+
       // ---- UNKNOWN ACTION SAFETY ------------------------------------------
       check('unknown data-action warns and does not throw', () => {
         const d = document.createElement('div');
@@ -318,6 +371,22 @@ window.LUMTEST = (function () {
         try { click(d); } catch (e) { threw = true; }
         d.remove();
         return !threw || 'dispatcher threw on unknown action';
+      });
+
+      // ---- SAMPLE EVENT ----------------------------------------------------
+      // Destructive: replaces all state. Must stay LAST in this suite.
+      check('demo.load: builds a complete, currently-running race', () => {
+        click($('[data-action="demo.load"]'));
+        const now = Date.now();
+        if (S.drivers.length !== 4) return 'drivers=' + S.drivers.length;
+        if (!S.stints.length) return 'no stints built';
+        if (!S.stints.every(s => !!s.driver)) return 'a stint has no driver';
+        if (!S.stints.some(s => s.startMs <= now && s.endMs > now)) return 'no stint is live';
+        if (!S.stints.some(s => s.done)) return 'no completed stint';
+        if (!S.goals.length || !S.tnotes.length) return 'goals or notes missing';
+        if (!Object.keys(S.avail).length) return 'no availability set';
+        if (!checkPrereqs()) return 'prerequisites not met after load';
+        return true;
       });
 
     } finally {

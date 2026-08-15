@@ -1,22 +1,29 @@
 {
-  "_what": "Step 5 baseline, captured at tag v5-pre-delegation (commit 04a66b3).",
+  "_what": "Rendered-markup baseline for the Verification standard in CLAUDE.md.",
   "_procedure": "LUM.seed() -> reload -> LUM.capture(). Clock frozen to 2026-09-12T15:30:00Z.",
   "_verified": "Reproduced identically across two separate page loads.",
+
+  "_history": [
+    "v5-pre-delegation (04a66b3): first capture, before Step 5.",
+    "Step 5 (b6b8b3e): inline handlers replaced with delegation. All hashes MATCHED, which was the point: a pure refactor must not change rendered output.",
+    "Sample event + pick lists + keypads: RE-BASELINED. Four hashes moved on purpose. tab_config gained the car/track datalists and the Load Sample Event button; tab_fuel, modals and tab_schedule gained inputmode attributes (tab_schedule by exactly 20 chars, one inputmode=numeric). tab_ops, tab_avail, tab_goals, strip and the stint digest were untouched and must stay untouched."
+  ],
 
   "stintCount": 5,
   "digest": "1|Tom Becker|std-tires|32|103.4|4444800|;2|Michael Kelly|std-tires|32|103.4|4444800|;3|Ana Silva|std-tires|32|103.4|4444800|;4|Yuki Sato|fs|32|103.4|4444800|;5|-|std-tires|25|80.8|3540800|F",
   "digestHash": "750abebd:189",
   "tab_ops": "7c72ff86:13754",
-  "tab_config": "b1b532e0:23767",
-  "tab_schedule": "13328101:15994",
+  "tab_config": "beeb31df:27934",
+  "tab_schedule": "1eea408a:16014",
   "tab_avail": "440346e9:27562",
-  "tab_fuel": "72cb6d8a:4810",
+  "tab_fuel": "c0a5fdf9:5131",
   "tab_goals": "416284ef:2365",
   "strip": "704d3d27:2653",
   "modalCount": 7,
-  "modals": "8c32d260:7045",
+  "modals": "3172f6fb:7227",
 
   "globalsChecked": 66,
   "globalsMissing": [],
-  "inlineHandlerAttrsInLiveDom": 240
+  "inlineHandlerAttrsInLiveDom": 0,
+  "functionalTests": 44
 }

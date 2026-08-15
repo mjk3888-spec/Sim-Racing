@@ -194,15 +194,19 @@
         <div class="frow3">
           <div class="field"><label>Car Class</label>
             <input id="cfg-class" list="class-options" data-action="config.save" placeholder="Select or type...">
-            <datalist id="class-options">
-              <option value="GTP"><option value="LMDh"><option value="Hypercar">
-              <option value="LMP2"><option value="LMP3"><option value="GT3">
-              <option value="GT4"><option value="GTE"><option value="GT2">
-              <option value="TCR"><option value="Prototype">
-            </datalist>
+            <!-- All three lists are filled by buildCatalogLists() in js/catalog.js.
+                 They are suggestions only: these stay plain inputs, so anything
+                 not listed can still be typed. -->
+            <datalist id="class-options"></datalist>
           </div>
-          <div class="field"><label>Car</label><input id="cfg-car" data-action="config.save"></div>
-          <div class="field"><label>Track</label><input id="cfg-track" data-action="config.save"></div>
+          <div class="field"><label>Car</label>
+            <input id="cfg-car" list="car-options" data-action="config.car-picked" placeholder="Select or type...">
+            <datalist id="car-options"></datalist>
+          </div>
+          <div class="field"><label>Track</label>
+            <input id="cfg-track" list="track-options" data-action="config.save" placeholder="Select or type...">
+            <datalist id="track-options"></datalist>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -256,9 +260,9 @@
           </div>
         </div>
         <div class="frow3">
-          <div class="field"><label>Tank Size (L)</label><input type="number" id="cfg-tank" data-action="config.save"></div>
-          <div class="field"><label>Pit Duration (m:ss)</label><input id="cfg-pit" data-action="config.save"></div>
-          <div class="field"><label>Fuel Reserve (L)</label><input type="number" id="cfg-res" step="0.5" data-action="config.save"></div>
+          <div class="field"><label>Tank Size (L)</label><input type="number" id="cfg-tank" inputmode="decimal" data-action="config.save"></div>
+          <div class="field"><label>Pit Duration (m:ss)</label><input id="cfg-pit" inputmode="decimal" data-action="config.pit" placeholder="1:10"></div>
+          <div class="field"><label>Fuel Reserve (L)</label><input type="number" id="cfg-res" step="0.5" inputmode="decimal" data-action="config.save"></div>
         </div>
       </div>
       <div class="card"><div class="sec-head">Calculated Summary</div><div id="cfg-calc"><div style="color:var(--muted);font-size:0.68rem">Add driver pace data to calculate.</div></div></div>
@@ -287,7 +291,9 @@
           <button class="btn gn" data-action="archive.save">⬇ Archive This Event</button>
           <button class="btn bl" data-action="export.csv">⎙ Export Schedule CSV</button>
           <button class="btn" data-action="export.text">⎙ Copy Rotation</button>
+          <button class="btn pk" data-action="demo.load">⚡ Load Sample Event</button>
         </div>
+        <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Load Sample Event fills the app with a complete 6-hour race already in progress, for testing. It replaces what is on this device.</div>
         <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Archive saves a snapshot of this event you can reload later. CSV and Copy give you a clean rotation to drop in Discord.</div>
         <div id="archive-list"></div>
       </div>
@@ -341,7 +347,7 @@
   <div class="card volt-l" style="padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <div style="font-family:var(--display);font-size:0.44rem;font-weight:600;color:var(--volt);letter-spacing:0.16em;flex-shrink:0">Race Start</div>
     <div class="field" style="margin:0;min-width:140px;flex:1"><label>Qualifying Driver</label><select id="sch-quali-driver" data-action="sched.meta-driver"><option value="">— Select Driver —</option></select></div>
-    <div class="field" style="margin:0;width:110px"><label>Starting Position</label><input id="sch-quali-pos" data-action="sched.meta-pos"></div>
+    <div class="field" style="margin:0;width:110px"><label>Starting Position</label><input id="sch-quali-pos" inputmode="numeric" data-action="sched.meta-pos"></div>
     <div class="field" style="margin:0;flex:2;min-width:180px"><label>Qualifying Notes</label><input id="sch-quali-notes" data-action="sched.meta-notes"></div>
   </div>
   <div class="twrap" style="overflow-x:auto">
@@ -400,14 +406,14 @@
     <div class="sec-head">Strategy Comparator</div>
     <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:12px;text-transform:none">Compare stops over a remaining race window. Uses your driver pace and fuel data plus pit calibration from below.</div>
     <div class="frow3">
-      <div class="field"><label>Time Remaining (h:mm or min)</label><input id="cmp-remain" placeholder="6:00" data-action="cmp.calc"></div>
-      <div class="field"><label>Race Lap Time (m:ss)</label><input id="cmp-lap" placeholder="1:31.7" data-action="cmp.calc"></div>
-      <div class="field"><label>Race Burn / Lap (L)</label><input type="number" id="cmp-burn" step="0.01" placeholder="3.20" data-action="cmp.calc"></div>
+      <div class="field"><label>Time Remaining (h:mm or min)</label><input id="cmp-remain" inputmode="decimal" placeholder="6:00" data-action="cmp.calc"></div>
+      <div class="field"><label>Race Lap Time (m:ss)</label><input id="cmp-lap" inputmode="decimal" placeholder="1:31.7" data-action="cmp.lap"></div>
+      <div class="field"><label>Race Burn / Lap (L)</label><input type="number" id="cmp-burn" step="0.01" inputmode="decimal" placeholder="3.20" data-action="cmp.calc"></div>
     </div>
     <div class="frow3">
-      <div class="field"><label>FS Lap Time (m:ss)</label><input id="cmp-fslap" placeholder="1:32.2" data-action="cmp.calc"></div>
-      <div class="field"><label>FS Burn / Lap (L)</label><input type="number" id="cmp-fsburn" step="0.01" placeholder="3.07" data-action="cmp.calc"></div>
-      <div class="field"><label>Usable Fuel / Stint (L)</label><input type="number" id="cmp-usable" step="1" placeholder="99" data-action="cmp.calc"></div>
+      <div class="field"><label>FS Lap Time (m:ss)</label><input id="cmp-fslap" inputmode="decimal" placeholder="1:32.2" data-action="cmp.lap"></div>
+      <div class="field"><label>FS Burn / Lap (L)</label><input type="number" id="cmp-fsburn" step="0.01" inputmode="decimal" placeholder="3.07" data-action="cmp.calc"></div>
+      <div class="field"><label>Usable Fuel / Stint (L)</label><input type="number" id="cmp-usable" step="1" inputmode="numeric" placeholder="99" data-action="cmp.calc"></div>
     </div>
     <div class="brow" style="margin-bottom:6px"><button class="btn sm bl" data-action="cmp.prefill">↻ Pull From Event Data</button></div>
     <div id="cmp-results" style="margin-top:10px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter values or pull from event data.</div></div>
@@ -418,9 +424,9 @@
     <div class="sec-head">Fuel Calculator</div>
     <div class="fcalc">
       <div class="frow3">
-        <div class="field"><label>Current Fuel (L)</label><input type="number" id="fc-fuel" step="0.1" data-action="fuel.calc"></div>
-        <div class="field"><label>Burn / Lap (L)</label><input type="number" id="fc-burn" step="0.01" data-action="fuel.calc"></div>
-        <div class="field"><label>Avg Lap (m:ss)</label><input id="fc-lap" data-action="fuel.calc"></div>
+        <div class="field"><label>Current Fuel (L)</label><input type="number" id="fc-fuel" step="0.1" inputmode="decimal" data-action="fuel.calc"></div>
+        <div class="field"><label>Burn / Lap (L)</label><input type="number" id="fc-burn" step="0.01" inputmode="decimal" data-action="fuel.calc"></div>
+        <div class="field"><label>Avg Lap (m:ss)</label><input id="fc-lap" inputmode="decimal" placeholder="2:18.5" data-action="fuel.lap"></div>
       </div>
       <div id="fc-results" style="margin-top:12px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter all three values above.</div></div>
     </div>
@@ -433,12 +439,12 @@
     <!-- Calibration inputs -->
     <div style="font-family:var(--display);font-size:0.42rem;font-weight:600;letter-spacing:0.2em;color:var(--muted);margin-bottom:4px;">Calibration — Pit Entry To Pit Exit</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:10px;text-transform:none">Time each scenario in practice from when you enter pit lane to when you exit.</div>
     <div class="frow">
-      <div class="field"><label>Full Stop — Full Fuel (sec, pit entry to exit)</label><input type="number" id="ps-full-fuel" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
-      <div class="field"><label>Half Stop — Half Fuel (sec, pit entry to exit)</label><input type="number" id="ps-half-fuel" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
+      <div class="field"><label>Full Stop — Full Fuel (sec, pit entry to exit)</label><input type="number" id="ps-full-fuel" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
+      <div class="field"><label>Half Stop — Half Fuel (sec, pit entry to exit)</label><input type="number" id="ps-half-fuel" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
     </div>
     <div class="frow">
-      <div class="field"><label>Full Stop + 2 Tires (sec, pit entry to exit)</label><input type="number" id="ps-2tire" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
-      <div class="field"><label>Full Stop + 4 Tires (sec, pit entry to exit)</label><input type="number" id="ps-4tire" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
+      <div class="field"><label>Full Stop + 2 Tires (sec, pit entry to exit)</label><input type="number" id="ps-2tire" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
+      <div class="field"><label>Full Stop + 4 Tires (sec, pit entry to exit)</label><input type="number" id="ps-4tire" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
     </div>
 
     <hr style="margin:14px 0;">
@@ -448,11 +454,11 @@
     <div class="frow3">
       <div class="field">
         <label>Fuel to Add (L)</label>
-        <input type="number" id="ps-fuel-add" step="0.5" placeholder="0.0" data-action="pit.calc">
+        <input type="number" id="ps-fuel-add" step="0.5" inputmode="decimal" placeholder="0.0" data-action="pit.calc">
       </div>
       <div class="field">
         <label>Tank Size (L)</label>
-        <input type="number" id="ps-tank-size" step="1" placeholder="110" data-action="pit.calc">
+        <input type="number" id="ps-tank-size" step="1" inputmode="numeric" placeholder="110" data-action="pit.calc">
       </div>
       <div class="field">
         <label>Tire Change</label>
@@ -516,7 +522,7 @@
   </div>
   <div class="frow"><div class="field"><label>Name</label><input id="dm-name"></div><div class="field"><label>Handle</label><input id="dm-handle"></div></div>
   <div class="frow3">
-    <div class="field" id="ir-field-modal"><label>iRating</label><input type="number" id="dm-ir"></div>
+    <div class="field" id="ir-field-modal"><label>iRating</label><input type="number" id="dm-ir" inputmode="numeric"></div>
     <div class="field"><label>Country</label><select id="dm-country"></select></div>
     <div class="field"><label>Color</label><input type="color" id="dm-color" style="height:38px;padding:2px"></div>
   </div>
@@ -527,16 +533,16 @@
   <div id="dm-tz-info" style="font-family:var(--mono);font-size:0.62rem;color:var(--gulf);margin:-4px 0 12px;padding:5px 10px;border-left:2px solid var(--gulf-border);min-height:1em"></div>
   <div class="pace-head race" style="margin-bottom:11px">Max Race Pace</div>
   <div class="frow">
-    <div class="field"><label>Lap Time (m:ss)</label><input id="dm-lap" data-action="config.check"></div>
-    <div class="field"><label>Fuel / Lap (L)</label><input type="number" id="dm-fpl" step="0.01" data-action="config.check"></div>
+    <div class="field"><label>Lap Time (m:ss)</label><input id="dm-lap" inputmode="decimal" placeholder="2:18.5" data-action="driver.lap"></div>
+    <div class="field"><label>Fuel / Lap (L)</label><input type="number" id="dm-fpl" step="0.01" inputmode="decimal" data-action="config.check"></div>
   </div>
   <div class="pace-head fsc" style="margin-bottom:11px">Fuel Save Pace</div>
   <div class="frow">
-    <div class="field"><label>FS Lap Time (m:ss)</label><input id="dm-fslap"></div>
-    <div class="field"><label>FS Fuel / Lap (L)</label><input type="number" id="dm-fsburn" step="0.01"></div>
+    <div class="field"><label>FS Lap Time (m:ss)</label><input id="dm-fslap" inputmode="decimal" placeholder="2:20.0" data-action="driver.lap-format"></div>
+    <div class="field"><label>FS Fuel / Lap (L)</label><input type="number" id="dm-fsburn" step="0.01" inputmode="decimal"></div>
   </div>
   <div class="frow" style="margin-top:4px">
-    <div class="field"><label>Max Consecutive Stints</label><input type="number" id="dm-maxconsec" min="1" max="10" placeholder="2"></div>
+    <div class="field"><label>Max Consecutive Stints</label><input type="number" id="dm-maxconsec" min="1" max="10" inputmode="numeric" placeholder="2"></div>
     <div style="display:flex;align-items:flex-end;padding-bottom:10px"><span style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);line-height:1.6">Max back-to-back stints before rest. Used by the stint optimizer.</span></div>
   </div>
   <input type="hidden" id="dm-idx">
@@ -549,7 +555,7 @@
 
 <div class="overlay" id="note-overlay"><div class="modal">
   <div class="mtitle">Stint <span id="note-num">—</span> — Notes</div>
-  <div class="frow"><div class="field"><label>Actual End (GMT hh:mm)</label><input id="note-end"></div><div class="field"><label>Actual Laps</label><input type="number" id="note-laps"></div></div>
+  <div class="frow"><div class="field"><label>Actual End (GMT hh:mm)</label><input id="note-end"></div><div class="field"><label>Actual Laps</label><input type="number" id="note-laps" inputmode="numeric"></div></div>
   <div class="field"><label>Notes</label><textarea id="note-txt" rows="3" style="text-transform:none"></textarea></div>
   <input type="hidden" id="note-idx">
   <div class="mfoot"><button class="btn" data-action="note.close">Cancel</button><button class="btn gn" data-action="note.done">Mark Done ✓</button><button class="btn pk" data-action="note.save">Save</button></div>
@@ -594,6 +600,7 @@
 
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
+<script src="js/catalog.js"></script>
 <script src="js/config.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/dashboard.js"></script>
@@ -603,6 +610,7 @@
 <script src="js/optimizer.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/sync.js"></script>
+<script src="js/demo.js"></script>
 <script src="js/actions.js"></script>
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
