@@ -1,0 +1,16 @@
+/* LUMINARY ENDURANCE MANAGER
+   Brand tokens: colours, fonts. Everything else references these.
+   Extracted verbatim from index.html lines 43-53. Load order matters:
+   tokens.css -> base.css -> components.css -> pages.css */
+
+:root{
+  --volt:#DFFF00;--volt-dim:rgba(223,255,0,0.10);--volt-glow:rgba(223,255,0,0.30);
+  --gulf:#8EC7E6;--gulf-dim:rgba(142,199,230,0.10);--gulf-border:rgba(142,199,230,0.32);
+  --orange:#FF8A1C;--orange-dim:rgba(255,138,28,0.10);--orange-border:rgba(255,138,28,0.32);
+  --bg:#050505;--surface:#0F0F0F;--surface2:#171717;
+  --border:#2A2A2A;--border-bright:#383838;--border-mid:#1E1E1E;
+  --green:#39FF14;--green-glow:rgba(57,255,20,0.25);--green-dim:rgba(57,255,20,0.09);
+  --yellow:#F0C040;--red:#FF4040;--red-dim:rgba(255,64,64,0.09);--red-border:rgba(255,64,64,0.35);
+  --text:#FFFFFF;--text-mid:#C8C8C8;--muted:#666;--muted-dim:#3C3C3C;
+  --mono:"Share Tech Mono",monospace;--display:"Orbitron",sans-serif;
+}

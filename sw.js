@@ -21,7 +21,7 @@
    GitHub Pages serves the site from a project subpath (user.github.io/repo/).
    ========================================================================== */
 
-const CACHE_VERSION = '2026-07-02.1';
+const CACHE_VERSION = '2026-08-13.3';
 const SHELL_CACHE = 'luminary-shell-' + CACHE_VERSION;
 const RUNTIME_CACHE = 'luminary-runtime-' + CACHE_VERSION;
 
@@ -29,6 +29,24 @@ const SHELL = [
   './',
   './index.html',
   './manifest.json',
+  './assets/logo.svg',
+  './styles/tokens.css',
+  './styles/base.css',
+  './styles/components.css',
+  './styles/pages.css',
+  './js/data.js',
+  './js/state.js',
+  './js/config.js',
+  './js/schedule.js',
+  './js/dashboard.js',
+  './js/strategy.js',
+  './js/drivers.js',
+  './js/goals.js',
+  './js/optimizer.js',
+  './js/nav.js',
+  './js/sync.js',
+  './js/main.js',
+  './js/pwa.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
