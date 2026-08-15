@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LUMINARY // ENDURANCE MANAGER v5</title>
+
+<!-- ============ PWA / HOME SCREEN INSTALL ============
+     All URLs below are relative so the app works when GitHub Pages serves it
+     from a project subpath (username.github.io/reponame/), not just a domain root. -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#050505">
+<!-- Standard install meta (Chromium / Android) -->
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS-specific install meta. Safari does NOT take all of this from manifest.json:
+     apple-touch-icon and the startup images below are still required for a correct
+     Home Screen icon and splash. apple-mobile-web-app-capable is nominally superseded
+     by mobile-web-app-capable, but older iOS releases only honor the apple- prefixed
+     tag, so both are declared. black-translucent + viewport-fit=cover lets the app
+     paint edge-to-edge behind the status bar; safe-area CSS below keeps content clear. -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Luminary">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<!-- iOS splash screens: Safari ignores manifest splash behavior and needs an explicit
+     startup image per device class. Portrait set covering iPhone SE (2016-class screens
+     excluded) through iPhone 16 Pro Max. -->
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-750x1334.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-828x1792.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1125x2436.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1242x2688.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1170x2532.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1179x2556.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1206x2622.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1284x2778.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-1320x2868.png">
+<!-- ============ /PWA ============ -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/6.11.0/css/flag-icons.min.css">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/pages.css">
+</head>
+<body>
+<div id="strip">
+  <div class="strip-scroll">
+    <div class="s-brand">
+      <img src="assets/logo.svg" alt="LUMINARY MANAGER" width="1254" height="1254" decoding="async">
+    </div>
+    <div class="s-block">
+      <div class="s-label">Event</div>
+      <div style="font-family:var(--display);font-size:0.76rem;font-weight:700;color:var(--volt);line-height:1.2;margin-bottom:2px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="s-event">No Event</div>
+      <div style="font-family:var(--mono);font-size:0.52rem;color:var(--muted)" id="s-car-class"></div>
+    </div>
+    <div class="s-pos-tile s-hide-sm">
+      <div class="s-label" style="text-align:center;margin-bottom:2px">Position</div>
+      <div style="font-family:var(--display);font-size:1.1rem;font-weight:900;color:var(--volt);text-shadow:0 0 12px var(--volt-glow);line-height:1" id="s-cur-position">—</div>
+      <div style="font-family:var(--display);font-size:0.32rem;letter-spacing:0.2em;color:rgba(223,255,0,0.38);margin-top:2px">Reported</div>
+    </div>
+    <div class="s-drivers-wrap">
+      <div class="s-panel nxt">
+        <div class="s-panel-body">
+          <div>
+            <div class="s-drv-tag nxt">Next Up</div>
+            <div class="s-drv-name"><span class="dot" id="s-nxt-dot" style="background:var(--muted)"></span><span id="s-nxt-name">—</span></div>
+            <div class="s-drv-sub" id="s-nxt-sub">Stand By</div>
+          </div>
+        </div>
+        <div class="s-panel-stat">
+          <div class="s-cd nxt" id="s-nxt-cd">—</div>
+          <div class="s-cd-label nxt">Due Up</div>
+          <div class="s-cd-sub nxt" id="s-nxt-localtime"></div>
+        </div>
+      </div>
+      <div class="s-panel cur" style="border-left:2px solid var(--volt);">
+        <div class="s-panel-body">
+          <div>
+            <div class="s-drv-tag cur">On Track</div>
+            <div class="s-drv-name"><span class="dot" id="s-cur-dot" style="background:var(--muted)"></span><span id="s-cur-name">—</span></div>
+            <div class="s-drv-sub" id="s-cur-sub">No Active Stint</div>
+          </div>
+        </div>
+        <div class="s-panel-stat">
+          <div class="s-cd cur" id="s-cur-cd">—</div>
+          <div class="s-cd-label cur">In Car</div>
+          <div class="s-cd-sub cur" id="s-cur-localtime"></div>
+        </div>
+      </div>
+    </div>
+    <div class="s-block s-hide-sm" style="min-width:110px;cursor:pointer;border-left:1px solid var(--border);" onclick="pg('config')">
+      <div class="s-label">Live Sync</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+        <span class="s-sync-dot" id="sync-dot" style="background:var(--muted)"></span>
+        <span id="sync-status" style="font-family:var(--mono);font-size:0.54rem;color:var(--muted)">Offline</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.46rem;color:var(--muted-dim);margin-top:2px" id="sync-time"></div>
+    </div>
+  </div>
+</div>
+
+<div id="nav">
+  <div class="tab on"  onclick="pg('ops')">Dashboard</div>
+  <div class="tab"     onclick="pg('config')">Team / Event Config</div>
+  <div class="tab"     onclick="pg('schedule')">Stint Schedule</div>
+  <div class="tab"     onclick="pg('avail')">Availability</div>
+  <div class="tab"     onclick="pg('fuel')">Pit Strategy</div>
+  <div class="tab"     onclick="pg('goals')">Goals &amp; Checklists</div>
+</div>
+
+<div id="main">
+
+<div id="page-ops" class="page on">
+  <div class="g2">
+    <div>
+      <div class="card" id="fs-card">
+        <div class="sec-head">Fair Share Status</div>
+        <div id="fs-content"><div style="color:var(--muted);font-size:0.68rem">Configure event to calculate.</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Race Progress</div>
+        <div id="sched-status-alert" style="margin-bottom:10px"></div>
+        <div class="g4" style="margin-bottom:10px">
+          <div class="stat"><div class="stat-l">Elapsed</div><div class="stat-v green" id="s-elapsed">—</div></div>
+          <div class="stat"><div class="stat-l">Remaining</div><div class="stat-v yellow" id="s-remain">—</div></div>
+          <div class="stat"><div class="stat-l">In-Game</div><div class="stat-v accent" id="s-igtime">—</div></div>
+          <div class="stat"><div class="stat-l">Car</div><div class="stat-v accent" id="ds-car" style="font-size:0.65rem">—</div></div>
+          <div class="stat"><div class="stat-l">Stint</div><div class="stat-v accent" id="ds-stint">—</div><div class="stat-s" id="ds-stintof">of —</div></div>
+          <div class="stat"><div class="stat-l">Done</div><div class="stat-v" id="ds-done">—</div></div>
+          <div class="stat"><div class="stat-l">Total Laps</div><div class="stat-v" id="ds-laps">—</div></div>
+          <div class="stat"><div class="stat-l">Last Pos</div><div class="stat-v green" id="ds-position">—</div></div>
+        </div>
+        <div class="pbar"><div class="pfill" id="race-pbar" style="width:0%"></div></div>
+        <div id="cur-stint-box"></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Stint Summary</div>
+        <div id="drv-stints"><div style="color:var(--muted);font-size:0.68rem">No stints built yet.</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="sec-head">Team Goals <span id="goals-dash-status" style="font-family:var(--mono);font-size:0.56rem;color:var(--muted);margin-left:6px"></span><button class="btn sm" style="margin-left:auto" onclick="pg('goals')">Manage →</button></div>
+        <div id="goals-dash-list"><div style="color:var(--muted);font-size:0.68rem">No goals set.</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Quick Log</div>
+        <div class="brow" style="gap:8px">
+          <button class="btn bl" onclick="quickLog('pit-in')">▸ Pit In</button>
+          <button class="btn gn" onclick="quickLog('pit-out')">◂ Pit Out</button>
+          <button class="btn rd" onclick="quickLog('contact')">⚠ Contact / Damage</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-top:8px;text-transform:none">One tap timestamps the event. Appears in the Race Status Log below.</div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Race Status Log</div>
+        <div id="race-status-log"><div style="color:var(--muted);font-size:0.68rem">No events logged yet.</div></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Drive Time Split</div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <canvas id="drive-pie" width="160" height="160" style="flex-shrink:0"></canvas>
+          <div id="drive-pie-legend" style="flex:1;min-width:120px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-config" class="page">
+  <div id="prereq-block" class="card red-l" style="margin-bottom:14px">
+    <div class="sec-head" style="color:var(--red);border-color:var(--red-border)">Schedule Prerequisites</div>
+    <div id="prereq-list"></div>
+    <div id="prereq-ready" style="display:none;margin-top:12px">
+      <button class="btn gn" style="width:100%;justify-content:center;padding:12px;font-size:0.55rem;letter-spacing:0.22em;" onclick="pg('schedule')">✓ All Prerequisites Met — View Stint Schedule →</button>
+    </div>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+  <div class="g2" style="min-width:600px;">
+    <div>
+      <div class="card">
+        <div class="sec-head">Race Identity</div>
+        <div class="field"><label>Sim Platform</label>
+          <select id="cfg-sim" onchange="sc();applySimMode();">
+            <option value="">— Select Sim —</option>
+            <option value="iracing">iRacing</option>
+            <option value="lmu">Le Mans Ultimate</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Event Name</label><input id="cfg-name" oninput="sc();checkPrereqs()"></div>
+        <div class="frow3">
+          <div class="field"><label>Car Class</label>
+            <input id="cfg-class" list="class-options" oninput="sc()" placeholder="Select or type...">
+            <datalist id="class-options">
+              <option value="GTP"><option value="LMDh"><option value="Hypercar">
+              <option value="LMP2"><option value="LMP3"><option value="GT3">
+              <option value="GT4"><option value="GTE"><option value="GT2">
+              <option value="TCR"><option value="Prototype">
+            </datalist>
+          </div>
+          <div class="field"><label>Car</label><input id="cfg-car" oninput="sc()"></div>
+          <div class="field"><label>Track</label><input id="cfg-track" oninput="sc()"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Race Timing</div>
+        <div class="frow">
+          <div class="field"><label>Race Date (GMT)</label><input type="date" id="cfg-date" onchange="sc();checkPrereqs();"></div>
+          <div class="field"><label>Green Flag Offset</label>
+            <select id="cfg-green" onchange="sc()">
+              <option value="0">0 min</option><option value="10">10 min</option><option value="15">15 min</option>
+              <option value="20">20 min</option><option value="30">30 min</option><option value="40" selected>40 min</option>
+              <option value="45">45 min</option><option value="50">50 min</option><option value="60">60 min</option>
+            </select>
+          </div>
+        </div>
+        <div class="frow3">
+          <div class="field"><label>Session Start (GMT)</label>
+            <div class="time-pair">
+              <select id="cfg-hour-h" onchange="syncHourDrop();sc();checkPrereqs();"></select>
+              <span class="tsep">:</span>
+              <select id="cfg-hour-m" onchange="syncHourDrop();sc();checkPrereqs();"></select>
+            </div>
+          </div>
+          <div class="field"><label>Race Duration</label>
+            <div class="time-pair">
+              <select id="cfg-dur-h" onchange="syncDurDrop();sc();checkPrereqs();"></select>
+              <span class="tsep">h</span>
+              <select id="cfg-dur-m" onchange="syncDurDrop();sc();checkPrereqs();"></select>
+              <span class="tsep">m</span>
+            </div>
+          </div>
+          <div class="field"><label>In-Game Start</label>
+            <div class="time-pair">
+              <select id="cfg-ighr-h" onchange="syncIghrDrop();sc();"></select>
+              <span class="tsep">:</span>
+              <select id="cfg-ighr-m" onchange="syncIghrDrop();sc();"></select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Fuel &amp; Stint Parameters</div>
+        <div class="alert info" style="margin-bottom:12px">Lap times auto-filled from driver pace data.</div>
+        <div class="g2" style="gap:16px;margin-bottom:12px">
+          <div><div class="pace-head race">Max Race Pace</div>
+            <div class="field"><label>Lap Time (m:ss)</label><input id="cfg-lap" readonly style="opacity:.5;cursor:not-allowed"></div>
+            <div class="field"><label>Fuel / Lap (L)</label><input id="cfg-fpl" readonly style="opacity:.5;cursor:not-allowed"></div>
+          </div>
+          <div><div class="pace-head fsc">Fuel Save Pace</div>
+            <div class="field"><label>FS Lap Time</label><input id="cfg-fslap" readonly style="opacity:.5;cursor:not-allowed"></div>
+            <div class="field"><label>FS Fuel / Lap (L)</label><input id="cfg-fsburn" readonly style="opacity:.5;cursor:not-allowed"></div>
+          </div>
+        </div>
+        <div class="frow3">
+          <div class="field"><label>Tank Size (L)</label><input type="number" id="cfg-tank" oninput="sc()"></div>
+          <div class="field"><label>Pit Duration (m:ss)</label><input id="cfg-pit" oninput="sc()"></div>
+          <div class="field"><label>Fuel Reserve (L)</label><input type="number" id="cfg-res" step="0.5" oninput="sc()"></div>
+        </div>
+      </div>
+      <div class="card"><div class="sec-head">Calculated Summary</div><div id="cfg-calc"><div style="color:var(--muted);font-size:0.68rem">Add driver pace data to calculate.</div></div></div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="sec-head">Driver Roster<button class="btn sm pk" style="margin-left:auto" onclick="openDrvModal()">+ Add Driver</button></div>
+        <div id="drv-list"></div>
+        <div id="iracing-block">
+          <div class="sec-head" style="margin-top:14px">Team iRating</div>
+          <div class="stat" style="max-width:180px"><div class="stat-l">Team Average</div><div class="stat-v accent" id="avg-ir">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Car Settings<div class="brow" style="margin-left:auto;gap:6px"><button class="btn sm" onclick="addCol()">+ Column</button><button class="btn sm rd" onclick="removeLastCol()">- Column</button></div></div>
+        <div class="twrap" style="overflow-x:auto"><table id="settings-table"><thead><tr id="settings-head"></tr></thead><tbody id="settings-tbody"></tbody></table></div>
+        <div style="font-family:var(--mono);font-size:0.52rem;color:var(--orange);margin-top:4px">Orange = Values Differ Between Drivers</div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Testing Notes<button class="btn sm" style="margin-left:auto" onclick="openTNote()">+ Add Note</button></div>
+        <div id="tnotes-list"></div>
+      </div>
+      <div class="card">
+        <div class="sec-head">Archive &amp; Export</div>
+        <div class="brow" style="gap:8px;margin-bottom:6px">
+          <button class="btn gn" onclick="archiveEvent()">⬇ Archive This Event</button>
+          <button class="btn bl" onclick="exportScheduleCSV()">⎙ Export Schedule CSV</button>
+          <button class="btn" onclick="exportScheduleText()">⎙ Copy Rotation</button>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Archive saves a snapshot of this event you can reload later. CSV and Copy give you a clean rotation to drop in Discord.</div>
+        <div id="archive-list"></div>
+      </div>
+      <div class="card gulf-l">
+        <div class="sec-head" style="color:var(--gulf);border-color:var(--gulf-border)">Live Sync — Teammate Sharing</div>
+        <div class="sync-panel">
+          <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--volt);margin-bottom:12px">Setup Instructions</div>
+          <div class="sync-step"><div class="sync-num">1</div><div>Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank">sheets.google.com</a>. You can name it anything — it just stores the sync state.</div></div>
+          <div class="sync-step"><div class="sync-num">2</div><div>In the sheet, go to <strong>Extensions → Apps Script</strong>. Delete any existing code and paste the <strong>Luminary Sync Script</strong> included in your download package (see README).</div></div>
+          <div class="sync-step"><div class="sync-num">3</div><div>Click <strong>Deploy → New Deployment → Web App</strong>. Set Execute As: <strong>Me</strong>. Set Who Has Access: <strong>Anyone</strong>. Click Deploy and authorize when prompted.</div></div>
+          <div class="sync-step"><div class="sync-num">4</div><div>Copy the <strong>Web App URL</strong> and paste it in the field below. Click Connect.</div></div>
+          <div class="sync-step" style="border-bottom:none"><div class="sync-num">5</div><div>Share the same Web App URL with all teammates. Each person pastes it into their own copy of the app to stay in sync during the event.</div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <input id="sync-url-input" style="flex:1;text-transform:none" placeholder="Paste Web App URL here...">
+          <button class="btn bl" onclick="saveSyncUrl()">Connect</button>
+          <button class="btn rd" onclick="disconnectSync()">Disconnect</button>
+        </div>
+        <div id="sync-url-disp" style="display:none" class="sync-url-disp"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <span class="s-sync-dot" id="sync-dot2" style="background:var(--muted)"></span>
+          <span id="sync-status2" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted)">Offline</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /config-scroll -->
+
+<div id="page-schedule" class="page">
+  <div class="sec-head">Stint Schedule</div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="sec-head">Stint Optimizer</div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="margin:0;min-width:220px;flex:1">
+        <label>Optimize For</label>
+        <select id="opt-mode">
+          <option value="race-pace">Race Pace</option>
+          <option value="efficiency">Best Efficiency (Pace + Fuel)</option>
+          <option value="fuel-economy">Best Fuel Economy</option>
+          <option value="even-time">Even Drive Time</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:1px">
+        <button class="btn pk" onclick="optimizeStints(false)">⚡ Optimize All Stints</button>
+        <button class="btn" onclick="optimizeStints(true)" style="color:var(--gulf);border-color:var(--gulf-border)">⚡ Optimize Unassigned</button>
+      </div>
+    </div>
+    <div id="opt-result" style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-top:10px;min-height:1em"></div>
+  </div>
+  <div class="card volt-l" style="padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="font-family:var(--display);font-size:0.44rem;font-weight:600;color:var(--volt);letter-spacing:0.16em;flex-shrink:0">Race Start</div>
+    <div class="field" style="margin:0;min-width:140px;flex:1"><label>Qualifying Driver</label><select id="sch-quali-driver" onchange="saveSchMeta()"><option value="">— Select Driver —</option></select></div>
+    <div class="field" style="margin:0;width:110px"><label>Starting Position</label><input id="sch-quali-pos" onblur="saveSchMetaPos()" onkeydown="if(event.key==='Enter')this.blur()"></div>
+    <div class="field" style="margin:0;flex:2;min-width:180px"><label>Qualifying Notes</label><input id="sch-quali-notes" oninput="saveSchMeta()"></div>
+  </div>
+  <div class="twrap" style="overflow-x:auto">
+    <table id="stint-table"><thead><tr>
+      <th>#</th><th>Status</th><th>Driver</th><th>Type</th>
+      <th>GMT Start</th><th>GMT End</th><th>Local Start</th><th>Local End</th>
+      <th>Duration</th><th>Laps</th><th>Fuel</th>
+      <th>Actual End</th><th>Act. Laps</th><th>Pos.</th><th>Damage</th><th>Notes</th>
+    </tr></thead><tbody id="stint-tbody"></tbody></table>
+  </div>
+  <div style="font-family:var(--mono);font-size:0.52rem;color:var(--muted);margin-top:6px">✦ = Final Stint &nbsp;·&nbsp; <span style="color:var(--gulf)">Blue</span> = Fuel Save</div>
+</div>
+
+<div id="page-avail" class="page">
+  <div class="card" style="margin-bottom:14px">
+    <div class="sec-head">Quick Availability Edit</div>
+    <div class="frow" style="margin-bottom:10px;align-items:flex-end">
+      <div class="field" style="margin:0;flex:2">
+        <label>Driver</label>
+        <select id="av-drv-select" onchange="refreshAvTimeDrops()"></select>
+      </div>
+      <div style="padding-bottom:9px;min-width:60px">
+        <span id="av-tz-label" style="font-family:var(--mono);font-size:0.62rem;color:var(--gulf)"></span>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+      <div class="field" style="margin:0">
+        <label>From (Local)</label>
+        <select id="av-from" style="width:130px"></select>
+      </div>
+      <div class="field" style="margin:0">
+        <label>To (Local)</label>
+        <select id="av-to" style="width:130px"></select>
+      </div>
+      <div style="display:flex;gap:8px;padding-bottom:1px;flex-wrap:wrap">
+        <button class="btn rd" onclick="applyWindow('blocked')">✗ Not Available</button>
+        <button class="btn" onclick="applyWindow('maybe')" style="color:#FFD700;border-color:rgba(255,215,0,0.4)">~ Maybe</button>
+        <button class="btn gn" onclick="applyWindow('open')">✓ Available</button>
+      </div>
+    </div>
+    <div style="font-family:var(--mono);font-size:0.56rem;color:var(--muted);margin-top:10px">
+      Times shown in the selected driver's local timezone. Spans midnight automatically.
+    </div>
+  </div>
+  <div class="alert info" style="margin-bottom:14px">Click individual cells to cycle: <span style="color:var(--green)">Available</span> → <span style="color:#FFD700">Maybe</span> → <span style="color:var(--red)">Not Available</span>.</div>
+  <div class="avwrap" id="avwrap"><div style="padding:20px;color:var(--muted);font-size:0.68rem">Build schedule first.</div></div>
+  <div style="display:flex;gap:16px;margin-top:10px;font-family:var(--mono);font-size:0.56rem">
+    <span style="color:var(--green)">■ Available</span><span style="color:#FFD700">■ Maybe</span><span style="color:var(--red)">■ Not Available</span>
+  </div>
+</div>
+
+<div id="page-fuel" class="page">
+
+  <!-- STRATEGY COMPARATOR -->
+  <div class="card volt-l">
+    <div class="sec-head">Strategy Comparator</div>
+    <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:12px;text-transform:none">Compare stops over a remaining race window. Uses your driver pace and fuel data plus pit calibration from below.</div>
+    <div class="frow3">
+      <div class="field"><label>Time Remaining (h:mm or min)</label><input id="cmp-remain" placeholder="6:00" oninput="calcCompare()"></div>
+      <div class="field"><label>Race Lap Time (m:ss)</label><input id="cmp-lap" placeholder="1:31.7" oninput="calcCompare()"></div>
+      <div class="field"><label>Race Burn / Lap (L)</label><input type="number" id="cmp-burn" step="0.01" placeholder="3.20" oninput="calcCompare()"></div>
+    </div>
+    <div class="frow3">
+      <div class="field"><label>FS Lap Time (m:ss)</label><input id="cmp-fslap" placeholder="1:32.2" oninput="calcCompare()"></div>
+      <div class="field"><label>FS Burn / Lap (L)</label><input type="number" id="cmp-fsburn" step="0.01" placeholder="3.07" oninput="calcCompare()"></div>
+      <div class="field"><label>Usable Fuel / Stint (L)</label><input type="number" id="cmp-usable" step="1" placeholder="99" oninput="calcCompare()"></div>
+    </div>
+    <div class="brow" style="margin-bottom:6px"><button class="btn sm bl" onclick="prefillCompare()">↻ Pull From Event Data</button></div>
+    <div id="cmp-results" style="margin-top:10px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter values or pull from event data.</div></div>
+  </div>
+
+  <!-- FUEL CALCULATOR -->
+  <div class="card">
+    <div class="sec-head">Fuel Calculator</div>
+    <div class="fcalc">
+      <div class="frow3">
+        <div class="field"><label>Current Fuel (L)</label><input type="number" id="fc-fuel" step="0.1" oninput="calcFuel()"></div>
+        <div class="field"><label>Burn / Lap (L)</label><input type="number" id="fc-burn" step="0.01" oninput="calcFuel()"></div>
+        <div class="field"><label>Avg Lap (m:ss)</label><input id="fc-lap" oninput="calcFuel()"></div>
+      </div>
+      <div id="fc-results" style="margin-top:12px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter all three values above.</div></div>
+    </div>
+  </div>
+
+  <!-- PIT STOP TIME CALCULATOR -->
+  <div class="card volt-l">
+    <div class="sec-head">Pit Stop Time Estimator</div>
+
+    <!-- Calibration inputs -->
+    <div style="font-family:var(--display);font-size:0.42rem;font-weight:600;letter-spacing:0.2em;color:var(--muted);margin-bottom:4px;">Calibration — Pit Entry To Pit Exit</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:10px;text-transform:none">Time each scenario in practice from when you enter pit lane to when you exit.</div>
+    <div class="frow">
+      <div class="field"><label>Full Stop — Full Fuel (sec, pit entry to exit)</label><input type="number" id="ps-full-fuel" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
+      <div class="field"><label>Half Stop — Half Fuel (sec, pit entry to exit)</label><input type="number" id="ps-half-fuel" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
+    </div>
+    <div class="frow">
+      <div class="field"><label>Full Stop + 2 Tires (sec, pit entry to exit)</label><input type="number" id="ps-2tire" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
+      <div class="field"><label>Full Stop + 4 Tires (sec, pit entry to exit)</label><input type="number" id="ps-4tire" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
+    </div>
+
+    <hr style="margin:14px 0;">
+
+    <!-- Live calculator inputs -->
+    <div style="font-family:var(--display);font-size:0.42rem;font-weight:600;letter-spacing:0.2em;color:var(--volt);margin-bottom:10px;">Calculate This Stop</div>
+    <div class="frow3">
+      <div class="field">
+        <label>Fuel to Add (L)</label>
+        <input type="number" id="ps-fuel-add" step="0.5" placeholder="0.0" oninput="calcPit()">
+      </div>
+      <div class="field">
+        <label>Tank Size (L)</label>
+        <input type="number" id="ps-tank-size" step="1" placeholder="110" oninput="calcPit()">
+      </div>
+      <div class="field">
+        <label>Tire Change</label>
+        <select id="ps-tires" onchange="calcPit()">
+          <option value="0">No Tires</option>
+          <option value="2">2 Tires</option>
+          <option value="4">4 Tires</option>
+        </select>
+      </div>
+    </div>
+    <div id="ps-results" style="margin-top:4px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter calibration data and stop details above.</div></div>
+  </div>
+
+  <!-- NOTES CARD -->
+  <div class="card">
+    <div class="sec-head">How To Use</div>
+    <div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-mid);line-height:1.8;text-transform:none">
+      <div style="margin-bottom:6px"><span style="color:var(--volt);text-transform:uppercase">Calibration</span> — Time a full pit stop in practice with full fuel and no tires, half fuel and no tires, etc. Enter those baseline seconds above.</div>
+      <div style="margin-bottom:6px"><span style="color:var(--volt);text-transform:uppercase">Fuel Time</span> — Interpolated linearly between half and full fill based on fuel added vs tank size.</div>
+      <div><span style="color:var(--volt);text-transform:uppercase">Tire Time</span> — Added on top of fuel time. Choose 2, 4, or no tires for each stop.</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="page-goals" class="page">
+  <div class="g2">
+    <div><div class="card">
+      <div class="sec-head">Team Goals<button class="btn sm" onclick="openGoal()">+ Add Goal</button></div>
+      <div class="alert info" style="margin-bottom:10px;font-size:0.62rem">Drag ☰ to reorder.</div>
+      <div id="goals-list"><div style="color:var(--muted);font-size:0.68rem">No goals set.</div></div>
+    </div></div>
+    <div><div class="card">
+      <div class="sec-head">Checklists<button class="btn sm" onclick="openCheck()">+ Add Item</button></div>
+      <div style="margin-bottom:12px">
+        <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--volt);margin-bottom:8px">// Pre-Race</div>
+        <div id="cl-pre"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--gulf);margin-bottom:8px">// Driver Change</div>
+        <div id="cl-swap"></div>
+      </div>
+      <div>
+        <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--orange);margin-bottom:8px">// Post-Race</div>
+        <div id="cl-post"></div>
+      </div>
+      <div class="brow" style="margin-top:12px"><button class="btn sm rd" onclick="resetChecks()">Reset All</button></div>
+    </div></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+<div class="l08">L08 · V5</div>
+
+<!-- MODALS -->
+<div class="overlay" id="drv-overlay"><div class="modal">
+  <div class="mtitle" id="drv-mtitle">Add Driver</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+    <select id="dm-lib" onchange="loadFromLib()" style="flex:1"></select>
+    <button class="btn xs rd" onclick="removeFromLib()" title="Remove selected driver from library">✕ Remove</button>
+  </div>
+  <div class="frow"><div class="field"><label>Name</label><input id="dm-name"></div><div class="field"><label>Handle</label><input id="dm-handle"></div></div>
+  <div class="frow3">
+    <div class="field" id="ir-field-modal"><label>iRating</label><input type="number" id="dm-ir"></div>
+    <div class="field"><label>Country</label><select id="dm-country"></select></div>
+    <div class="field"><label>Color</label><input type="color" id="dm-color" style="height:38px;padding:2px"></div>
+  </div>
+  <div class="frow">
+    <div class="field" style="flex:2"><label>Timezone</label><select id="dm-tz" onchange="onTZChange()"></select></div>
+    <div class="field"><label>Time Format</label><select id="dm-timefmt"><option value="24">24-Hour</option><option value="12">12-Hour</option></select></div>
+  </div>
+  <div id="dm-tz-info" style="font-family:var(--mono);font-size:0.62rem;color:var(--gulf);margin:-4px 0 12px;padding:5px 10px;border-left:2px solid var(--gulf-border);min-height:1em"></div>
+  <div class="pace-head race" style="margin-bottom:11px">Max Race Pace</div>
+  <div class="frow">
+    <div class="field"><label>Lap Time (m:ss)</label><input id="dm-lap" oninput="checkPrereqs()"></div>
+    <div class="field"><label>Fuel / Lap (L)</label><input type="number" id="dm-fpl" step="0.01" oninput="checkPrereqs()"></div>
+  </div>
+  <div class="pace-head fsc" style="margin-bottom:11px">Fuel Save Pace</div>
+  <div class="frow">
+    <div class="field"><label>FS Lap Time (m:ss)</label><input id="dm-fslap"></div>
+    <div class="field"><label>FS Fuel / Lap (L)</label><input type="number" id="dm-fsburn" step="0.01"></div>
+  </div>
+  <div class="frow" style="margin-top:4px">
+    <div class="field"><label>Max Consecutive Stints</label><input type="number" id="dm-maxconsec" min="1" max="10" placeholder="2"></div>
+    <div style="display:flex;align-items:flex-end;padding-bottom:10px"><span style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);line-height:1.6">Max back-to-back stints before rest. Used by the stint optimizer.</span></div>
+  </div>
+  <input type="hidden" id="dm-idx">
+  <div class="mfoot">
+    <button class="btn rd" id="dm-delete-btn" onclick="confirmDeleteDriver()" style="margin-right:auto;display:none">Delete</button>
+    <button class="btn" onclick="closeDrv()">Cancel</button>
+    <button class="btn pk" onclick="saveDrv()">Save Driver</button>
+  </div>
+</div></div>
+
+<div class="overlay" id="note-overlay"><div class="modal">
+  <div class="mtitle">Stint <span id="note-num">—</span> — Notes</div>
+  <div class="frow"><div class="field"><label>Actual End (GMT hh:mm)</label><input id="note-end"></div><div class="field"><label>Actual Laps</label><input type="number" id="note-laps"></div></div>
+  <div class="field"><label>Notes</label><textarea id="note-txt" rows="3" style="text-transform:none"></textarea></div>
+  <input type="hidden" id="note-idx">
+  <div class="mfoot"><button class="btn" onclick="closeNote()">Cancel</button><button class="btn gn" onclick="markDone()">Mark Done ✓</button><button class="btn pk" onclick="saveNote()">Save</button></div>
+</div></div>
+
+<div class="overlay" id="col-overlay"><div class="modal" style="width:360px">
+  <div class="mtitle">Add Setting Column</div>
+  <div class="field"><label>Column Name</label><input id="col-name"></div>
+  <div class="mfoot"><button class="btn" onclick="document.getElementById('col-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="confirmCol()">Add</button></div>
+</div></div>
+
+<div class="overlay" id="goal-overlay"><div class="modal" style="width:420px">
+  <div class="mtitle">Add Team Goal</div>
+  <div class="field"><label>Goal</label><textarea id="goal-txt" rows="2" style="text-transform:none"></textarea></div>
+  <div class="mfoot"><button class="btn" onclick="document.getElementById('goal-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="saveGoal()">Add</button></div>
+</div></div>
+
+<div class="overlay" id="check-overlay"><div class="modal" style="width:440px">
+  <div class="mtitle">Add Checklist Item</div>
+  <div class="field"><label>Category</label><select id="check-cat"><option value="pre">Pre-Race</option><option value="swap">Driver Change</option><option value="post">Post-Race</option></select></div>
+  <div class="field"><label>Item</label><textarea id="check-txt" rows="2" style="text-transform:none"></textarea></div>
+  <div class="mfoot"><button class="btn" onclick="document.getElementById('check-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="saveCheck()">Add</button></div>
+</div></div>
+
+<div class="overlay" id="tnote-overlay"><div class="modal">
+  <div class="mtitle">Add Testing Note</div>
+  <div class="frow"><div class="field"><label>Driver</label><select id="tn-drv"></select></div><div class="field"><label>Best Lap</label><input id="tn-lap" style="text-transform:none"></div></div>
+  <div class="frow4"><div class="field"><label>Air Temp</label><input type="number" id="tn-air" step="0.1"></div><div class="field"><label>Track Temp</label><input type="number" id="tn-trk" step="0.1"></div><div class="field"><label>Unit</label><select id="tn-unit"><option value="C">°C</option><option value="F">°F</option></select></div><div class="field"><label>Fuel/Burn</label><input id="tn-fuel" style="text-transform:none"></div></div>
+  <div class="mfoot"><button class="btn" onclick="document.getElementById('tnote-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="saveTNote()">Add Note</button></div>
+</div></div>
+
+<div class="overlay" id="dmg-overlay"><div class="modal" style="width:380px">
+  <div class="mtitle">⚠ Report Damage</div>
+  <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted);margin-bottom:14px;text-transform:none" id="dmg-modal-subtitle">Stint —</div>
+  <div class="field"><label>Repair Time (m:ss or minutes)</label><input id="dmg-time-input" style="font-size:1rem;padding:10px 12px"></div>
+  <input type="hidden" id="dmg-idx">
+  <div class="mfoot">
+    <button class="btn" onclick="document.getElementById('dmg-overlay').classList.remove('on');S.stints[parseInt(document.getElementById('dmg-idx').value)].damage=false;renderSchedule();">Cancel</button>
+    <button class="btn pk" onclick="saveDamageModal()">Confirm Damage</button>
+  </div>
+</div></div>
+
+<script src="js/data.js"></script>
+<script src="js/state.js"></script>
+<script src="js/config.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/strategy.js"></script>
+<script src="js/drivers.js"></script>
+<script src="js/goals.js"></script>
+<script src="js/optimizer.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/main.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
