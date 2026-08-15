@@ -4,14 +4,15 @@
 
    Extracted verbatim from index.html lines 1293-1445.
    These are CLASSIC scripts, not ES modules: top-level declarations stay in the
-   shared global scope so the existing inline onclick= handlers keep working.
+   shared global scope, where the delegated dispatcher in js/actions.js resolves
+   them by name. No inline on*= handlers remain in the markup (Step 5).
    LOAD ORDER MATTERS - js/main.js must be last. */
 
 // DRIVERS
 function renderDriverList(){
   const e=el('drv-list');if(!e)return;
   const isIR=S.config.sim==='iracing';
-  e.innerHTML=S.drivers.map((d,i)=>`<div class="dcard" style="border-left:3px solid ${d.color}" onclick="openDrvModal(${i})"><div class="dcard-av" style="background:${d.color}22;color:${d.color};font-size:13px">${drvInitials(d.name)}</div><div style="flex:1"><div style="font-family:var(--display);font-size:0.66rem;font-weight:700;color:var(--text)">${flagHTML(d)}${d.handle||d.name}${d.handle?` <span style="font-weight:400;color:var(--gulf);font-size:0.6rem">/ ${d.name}</span>`:''}</div><div class="dcard-meta">${d.tzabbr||(d.tz?getTZAbbr(d.tz):('GMT'+(d.gmt>=0?'+':'')+d.gmt))}${isIR&&d.ir?' · <span style="color:var(--volt)">'+d.ir.toLocaleString()+' iR</span>':''}</div>${d.lap?'<div style="font-family:var(--mono);font-size:0.58rem;color:#C060E8;margin-top:3px">Max: '+d.lap+' · '+d.fpl+'L/lap</div>':''}${d.fslap?'<div style="font-family:var(--mono);font-size:0.58rem;color:var(--green);margin-top:2px">FS: '+d.fslap+' · '+d.fsburn+'L/lap</div>':''}</div></div>`).join('');
+  e.innerHTML=S.drivers.map((d,i)=>`<div class="dcard" style="border-left:3px solid ${d.color}" data-action="driver.edit" data-i="${i}"><div class="dcard-av" style="background:${d.color}22;color:${d.color};font-size:13px">${drvInitials(d.name)}</div><div style="flex:1"><div style="font-family:var(--display);font-size:0.66rem;font-weight:700;color:var(--text)">${flagHTML(d)}${d.handle||d.name}${d.handle?` <span style="font-weight:400;color:var(--gulf);font-size:0.6rem">/ ${d.name}</span>`:''}</div><div class="dcard-meta">${d.tzabbr||(d.tz?getTZAbbr(d.tz):('GMT'+(d.gmt>=0?'+':'')+d.gmt))}${isIR&&d.ir?' · <span style="color:var(--volt)">'+d.ir.toLocaleString()+' iR</span>':''}</div>${d.lap?'<div style="font-family:var(--mono);font-size:0.58rem;color:#C060E8;margin-top:3px">Max: '+d.lap+' · '+d.fpl+'L/lap</div>':''}${d.fslap?'<div style="font-family:var(--mono);font-size:0.58rem;color:var(--green);margin-top:2px">FS: '+d.fslap+' · '+d.fsburn+'L/lap</div>':''}</div></div>`).join('');
   const irB=el('iracing-block');if(irB)irB.style.display=isIR?'block':'none';
   const irs=S.drivers.filter(d=>d.ir>0);const ai=el('avg-ir');if(ai)ai.textContent=irs.length?Math.round(irs.reduce((a,d)=>a+d.ir,0)/irs.length).toLocaleString():'—';
   renderStintSummary();
@@ -42,8 +43,8 @@ function renderArchive(){
         <div style="font-family:var(--display);font-size:0.62rem;font-weight:700;color:var(--text)">${a.name}</div>
         <div style="font-family:var(--mono);font-size:0.52rem;color:var(--muted)">${[a.car,a.track].filter(Boolean).join(' · ')}${a.car||a.track?' · ':''}Saved ${ds}</div>
       </div>
-      <button class="btn xs bl" onclick="restoreArchive(${a.id})">Load</button>
-      <button class="btn xs rd" onclick="delArchive(${a.id})">✕</button>
+      <button class="btn xs bl" data-action="archive.restore" data-id="${a.id}">Load</button>
+      <button class="btn xs rd" data-action="archive.delete" data-id="${a.id}">✕</button>
     </div>`;
   }).join('');
 }
@@ -107,7 +108,7 @@ function renderSettingsTable(){
   const cols=S.settingCols;const hd=el('settings-head');const tb=el('settings-tbody');if(!hd||!tb)return;
   hd.innerHTML='<th>Driver</th>'+cols.map(c=>'<th>'+c.n+'</th>').join('');
   const av={};cols.forEach(c=>{av[c.k]=S.drivers.map(d=>(d.settings&&d.settings[c.k])||'');});
-  tb.innerHTML=S.drivers.map((d,di)=>`<tr><td style="white-space:nowrap;color:var(--text)"><div style="display:flex;align-items:center;gap:7px"><span class="dot" style="background:${d.color}"></span>${flagHTML(d)}${d.handle||d.name}</div></td>${cols.map(c=>{const vals=av[c.k].filter(v=>v!=='');const val=(d.settings&&d.settings[c.k])||'';const diff=vals.length>1&&!vals.every(v=>v===vals[0]);return`<td class="${diff?'diff-cell':''}"><input type="text" value="${val}" style="width:90px;background:transparent;border-color:${diff?'var(--orange)':'var(--border-bright)'}" data-di="${di}" data-k="${c.k}" onblur="flushSetting(this)" onchange="flushSetting(this)"></td>`;}).join('')}</tr>`).join('');
+  tb.innerHTML=S.drivers.map((d,di)=>`<tr><td style="white-space:nowrap;color:var(--text)"><div style="display:flex;align-items:center;gap:7px"><span class="dot" style="background:${d.color}"></span>${flagHTML(d)}${d.handle||d.name}</div></td>${cols.map(c=>{const vals=av[c.k].filter(v=>v!=='');const val=(d.settings&&d.settings[c.k])||'';const diff=vals.length>1&&!vals.every(v=>v===vals[0]);return`<td class="${diff?'diff-cell':''}"><input type="text" value="${val}" style="width:90px;background:transparent;border-color:${diff?'var(--orange)':'var(--border-bright)'}" data-di="${di}" data-k="${c.k}" data-action="settings.flush"></td>`;}).join('')}</tr>`).join('');
 }
 function flushSetting(inp){const di=parseInt(inp.dataset.di);const k=inp.dataset.k;const v=inp.value;if(!S.drivers[di].settings)S.drivers[di].settings={};if(S.drivers[di].settings[k]!==v){S.drivers[di].settings[k]=v;persist();renderSettingsTable();}}
 function addCol(){el('col-overlay').classList.add('on');}
@@ -121,7 +122,7 @@ function saveTNote(){S.tnotes.push({id:Date.now(),driver:gv('tn-drv'),lap:gv('tn
 function renderTNotes(){
   const e=el('tnotes-list');if(!e)return;
   if(!S.tnotes.length){e.innerHTML='<div style="color:var(--muted);font-size:0.68rem">No testing notes yet.</div>';return;}
-  e.innerHTML=S.tnotes.map((n,ni)=>{const drv=S.drivers.find(d=>d.name===n.driver);const dc=drv?drv.color:'var(--muted)';return`<div class="tnote"><div class="tnote-head"><div><div class="tnote-drv"><span class="dot" style="background:${dc}"></span>${n.driver}${n.lap?` <span style="color:var(--green);font-size:0.7rem">${n.lap}</span>`:''}</div>${n.air?'<div class="tnote-meta">Air: '+n.air+'°'+n.unit+' · Track: '+n.trk+'°'+n.unit+(n.fuel?' · '+n.fuel:'')+'</div>':''}</div><div class="brow"><button class="btn xs" onclick="addLapNote(${ni})">+ Note</button><button class="btn xs rd" onclick="delTNote(${ni})">Delete</button></div></div>${(n.lapNotes||[]).map((ln,li)=>'<div class="lap-note"><div class="lap-note-txt">'+ln+'</div><button class="btn xs rd" onclick="delLapNote('+ni+','+li+')">✕</button></div>').join('')}</div>`;}).join('');
+  e.innerHTML=S.tnotes.map((n,ni)=>{const drv=S.drivers.find(d=>d.name===n.driver);const dc=drv?drv.color:'var(--muted)';return`<div class="tnote"><div class="tnote-head"><div><div class="tnote-drv"><span class="dot" style="background:${dc}"></span>${n.driver}${n.lap?` <span style="color:var(--green);font-size:0.7rem">${n.lap}</span>`:''}</div>${n.air?'<div class="tnote-meta">Air: '+n.air+'°'+n.unit+' · Track: '+n.trk+'°'+n.unit+(n.fuel?' · '+n.fuel:'')+'</div>':''}</div><div class="brow"><button class="btn xs" data-action="tnote.add-lap" data-i="${ni}">+ Note</button><button class="btn xs rd" data-action="tnote.delete" data-i="${ni}">Delete</button></div></div>${(n.lapNotes||[]).map((ln,li)=>'<div class="lap-note"><div class="lap-note-txt">'+ln+'</div><button class="btn xs rd" data-action="tnote.del-lap" data-i="'+ni+'" data-li="'+li+'">✕</button></div>').join('')}</div>`;}).join('');
 }
 function addLapNote(ni){const t=prompt('Enter note:');if(!t)return;S.tnotes[ni].lapNotes=S.tnotes[ni].lapNotes||[];S.tnotes[ni].lapNotes.push(t);persist();renderTNotes();}
 function delLapNote(ni,li){S.tnotes[ni].lapNotes.splice(li,1);persist();renderTNotes();}
@@ -157,5 +158,5 @@ function renderStatusLog(){
   (S.raceLog||[]).forEach(l=>{events.push({type:l.type==='contact'?'damage':'manual',text:fmtGMT(new Date(l.ts))+' GMT — '+l.label+(l.driver?' · '+l.driver:''),ts:l.ts,logId:l.id});});
   events.sort((a,b)=>a.ts-b.ts);
   if(!events.length){e.innerHTML='<div style="color:var(--muted);font-size:0.68rem">No events logged yet.</div>';return;}
-  e.innerHTML=events.map(ev=>{const icon=ev.type==='damage'?'⚠':ev.type==='start'?'◉':ev.type==='manual'?'▸':'◈';const col=ev.type==='damage'?'var(--red)':ev.type==='start'?'var(--volt)':ev.type==='manual'?'var(--gulf)':ev.color||'var(--green)';const del=ev.logId?`<button class="btn xs" style="margin-left:auto;flex-shrink:0" onclick="delLogEntry(${ev.logId})">✕</button>`:'';return`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start"><span style="color:${col};flex-shrink:0;font-size:0.9rem">${icon}</span><div style="font-family:var(--mono);font-size:0.7rem;color:${col};line-height:1.5;flex:1">${ev.text}</div>${del}</div>`;}).join('');
+  e.innerHTML=events.map(ev=>{const icon=ev.type==='damage'?'⚠':ev.type==='start'?'◉':ev.type==='manual'?'▸':'◈';const col=ev.type==='damage'?'var(--red)':ev.type==='start'?'var(--volt)':ev.type==='manual'?'var(--gulf)':ev.color||'var(--green)';const del=ev.logId?`<button class="btn xs" style="margin-left:auto;flex-shrink:0" data-action="log.delete" data-id="${ev.logId}">✕</button>`:'';return`<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start"><span style="color:${col};flex-shrink:0;font-size:0.9rem">${icon}</span><div style="font-family:var(--mono);font-size:0.7rem;color:${col};line-height:1.5;flex:1">${ev.text}</div>${del}</div>`;}).join('');
 }

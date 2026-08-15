@@ -3,7 +3,8 @@
 
    Extracted verbatim from index.html lines 805-942.
    These are CLASSIC scripts, not ES modules: top-level declarations stay in the
-   shared global scope so the existing inline onclick= handlers keep working.
+   shared global scope, where the delegated dispatcher in js/actions.js resolves
+   them by name. No inline on*= handlers remain in the markup (Step 5).
    LOAD ORDER MATTERS - js/main.js must be last. */
 
 // STINTS
@@ -47,7 +48,7 @@ function renderSchedule(){
     const dOpts='<option value="">— Needs Driver —</option>'+S.drivers.map(d=>{const av=getAv(s,d.name);const am=av==='open'?' ✓':av==='maybe'?' ~':av==='blocked'?' ✗':'';const ac=av==='blocked'?'color:#ff4040':av==='maybe'?'color:#f0c040':'';return`<option value="${d.name}"${s.driver===d.name?' selected':''} style="${ac}">${d.name}${am}</option>`;}).join('');
     const dd=s.driver?(flagHTML(drv)+(drv&&drv.handle?drv.handle:s.driver)):'Needs Driver';
     const sav=s.driver?getAv(s,s.driver):'open';const arc=sav==='blocked'?'avail-blocked':sav==='maybe'?'avail-maybe':'';
-    const dmg=s.damage?`<button class="btn xs" style="background:var(--red-dim);border-color:var(--red);color:var(--red);white-space:nowrap" onclick="toggleDamage(${i},false)">⚠ Reported${s.damageTime?' ('+s.damageTime+')':''}</button>`:`<button class="btn xs" onclick="toggleDamage(${i},true)">Damage</button>`;
+    const dmg=s.damage?`<button class="btn xs" style="background:var(--red-dim);border-color:var(--red);color:var(--red);white-space:nowrap" data-action="stint.damage-clear" data-i="${i}">⚠ Reported${s.damageTime?' ('+s.damageTime+')':''}</button>`:`<button class="btn xs" data-action="stint.damage-set" data-i="${i}">Damage</button>`;
     const isPR=past&&!live;const pp=S.stints.slice(0,i).filter(x=>x.position).slice(-1)[0];const cpn=parseInt(s.position);const ppn=pp?parseInt(pp.position):null;
     const pc=s.position&&ppn?(cpn<ppn?'var(--green)':cpn>ppn?'var(--red)':'var(--text)'):'var(--text)';
     return`<tr class="${s.done?'done ':''+(live?'live-row ':'')}${arc}" style="${isPR?'background:rgba(223,255,0,0.008);box-shadow:inset 2px 0 0 rgba(223,255,0,0.2)':''}">
@@ -55,9 +56,9 @@ function renderSchedule(){
       <td>${status}</td>
       <td style="min-width:155px"><div style="display:flex;flex-direction:column;gap:3px">
         <div style="font-family:var(--display);font-size:0.65rem;font-weight:700;color:var(--text)">${dd}</div>
-        <select style="border-left:3px solid ${dc};padding-left:7px;font-size:0.72rem;background:var(--bg);color:var(--muted);border-top:none;border-right:none;border-bottom:none;border-style:solid;border-width:0 0 0 3px;outline:none;cursor:pointer" onchange="assignDrv(${i},this.value)">${dOpts}</select>
+        <select style="border-left:3px solid ${dc};padding-left:7px;font-size:0.72rem;background:var(--bg);color:var(--muted);border-top:none;border-right:none;border-bottom:none;border-style:solid;border-width:0 0 0 3px;outline:none;cursor:pointer" data-action="stint.assign-driver" data-i="${i}">${dOpts}</select>
       </div></td>
-      <td><select style="background:var(--bg);color:${tc};border:1px solid var(--border);font-family:var(--mono);font-size:0.72rem;padding:3px 6px;cursor:pointer;min-width:100px" onchange="assignType(${i},this.value)">
+      <td><select style="background:var(--bg);color:${tc};border:1px solid var(--border);font-family:var(--mono);font-size:0.72rem;padding:3px 6px;cursor:pointer;min-width:100px" data-action="stint.assign-type" data-i="${i}">
         <option value="std"${s.stintType==='std'||!s.stintType?' selected':''}>Standard</option>
         <option value="fs"${s.stintType==='fs'?' selected':''}>Fuel Save</option>
         <option value="std-tires"${s.stintType==='std-tires'?' selected':''}>Std+Tires</option>
@@ -70,11 +71,11 @@ function renderSchedule(){
       <td style="font-size:0.8rem">${fmtDur(s.durMs)}</td>
       <td style="font-size:0.8rem">${s.laps}</td>
       <td style="font-size:0.8rem">${s.fuel}L</td>
-      <td><input type="text" value="${s.actualEnd||''}" style="width:62px;background:var(--bg);border:1px solid var(--volt);color:var(--volt);font-size:0.78rem;padding:3px 5px;text-align:center" onblur="saveActualEnd(${i},this.value)" onkeydown="if(event.key==='Enter')this.blur()"></td>
-      <td><input type="text" value="${s.actualLaps||''}" style="width:48px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:0.78rem;padding:3px 5px;text-align:center" onblur="saveActualLaps(${i},this.value)" onkeydown="if(event.key==='Enter')this.blur()"></td>
-      <td><input type="text" value="${s.position||''}" style="width:48px;background:var(--bg);border:1px solid var(--border);color:${pc};font-size:0.78rem;padding:3px 5px;text-align:center;font-weight:700" onblur="savePosition(${i},this.value)" onkeydown="if(event.key==='Enter')this.blur()"></td>
+      <td><input type="text" value="${s.actualEnd||''}" style="width:62px;background:var(--bg);border:1px solid var(--volt);color:var(--volt);font-size:0.78rem;padding:3px 5px;text-align:center" data-action="stint.actual-end" data-i="${i}"></td>
+      <td><input type="text" value="${s.actualLaps||''}" style="width:48px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:0.78rem;padding:3px 5px;text-align:center" data-action="stint.actual-laps" data-i="${i}"></td>
+      <td><input type="text" value="${s.position||''}" style="width:48px;background:var(--bg);border:1px solid var(--border);color:${pc};font-size:0.78rem;padding:3px 5px;text-align:center;font-weight:700" data-action="stint.position" data-i="${i}"></td>
       <td style="white-space:nowrap">${dmg}</td>
-      <td><button class="btn xs" onclick="openNote(${i})">✎</button></td>
+      <td><button class="btn xs" data-action="stint.note" data-i="${i}">✎</button></td>
     </tr>`;
   }).join('');
 }
@@ -99,7 +100,7 @@ function buildAvail(){
   h+='</tr></thead><tbody>';
   S.drivers.forEach((drv,di)=>{
     h+=`<tr><td class="dc" style="border-left:3px solid ${drv.color}"><div style="display:flex;align-items:center;gap:7px"><span class="dot" style="background:${drv.color}"></span><div><div style="font-family:var(--display);font-size:0.62rem;font-weight:700">${flagHTML(drv)}${drv.handle||drv.name}</div><div style="font-size:0.56rem;color:var(--muted)">${drv.tzabbr||(drv.tz?getTZAbbr(drv.tz):('GMT'+(drv.gmt>=0?'+':'')+drv.gmt))}</div></div></div></td>`;
-    slots.forEach(ms=>{const key=di+'_'+Math.floor(ms/1800000);const st=S.avail[key]||'open';const ltr=st==='open'?'A':st==='maybe'?'M':'N/A';h+=`<td><div class="avcell ${st}" onclick="cycleAv('${key}')" title="Local: ${fmtLDS(new Date(ms),drv)}">${ltr}</div></td>`;});
+    slots.forEach(ms=>{const key=di+'_'+Math.floor(ms/1800000);const st=S.avail[key]||'open';const ltr=st==='open'?'A':st==='maybe'?'M':'N/A';h+=`<td><div class="avcell ${st}" data-action="avail.cycle" data-key="${key}" title="Local: ${fmtLDS(new Date(ms),drv)}">${ltr}</div></td>`;});
     h+='</tr><tr style="background:rgba(0,0,0,0.15)"><td style="padding:3px 12px;font-size:0.55rem;color:var(--muted);border-right:1px solid var(--border-bright)">Local →</td>';
     slots.forEach(ms=>{const _lr=fmtLD(new Date(ms),drv);const _lt=typeof _lr==='string'?_lr:_lr.time;const _la=typeof _lr==='object'?(_lr.ampm||''):'';h+=`<td style="text-align:center;padding:2px 4px;border-right:1px solid var(--border)"><div style="font-size:0.65rem;color:var(--muted);line-height:1.1">${_lt}</div><div style="font-size:0.5rem;color:var(--muted-dim);line-height:1.2">${_la}</div></td>`;});
     h+='</tr>';

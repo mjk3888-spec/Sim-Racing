@@ -29,6 +29,17 @@ Live sync today is a **broadcast**: one strategist writes, teammates poll every
 15 seconds. Backed by a Google Apps Script web app writing to a Google Sheet
 (`sync/google-apps-script.gs`). Last write wins, no merging, by design.
 
+**The deployed sync backend is stale and does not match this repo.** A web app
+was deployed in May 2026 against a sheet named "WTR Race Manager — Sync
+Database". That deployment writes to a tab named `sync`; the script committed
+here (`sync/google-apps-script.gs`) expects a tab named `LUM_SYNC`, and the
+stored row layout differs too. So live sync will not work end to end today.
+This is **deliberately not being repaired** - Steps 7 to 9 replace the whole
+transport with Cloudflare Durable Objects, and fixing a backend scheduled for
+deletion is wasted effort. Do not "helpfully" fix it. If sync must work before
+Step 10, the cheap move is repointing the deployed script, not rewriting either
+side.
+
 ---
 
 ## File map
@@ -36,7 +47,7 @@ Live sync today is a **broadcast**: one strategist writes, teammates poll every
 ```
 index.html          markup shell only, ~40 KB
 styles/             tokens -> base -> components -> pages   (ORDER MATTERS)
-js/                 13 classic scripts                      (ORDER MATTERS)
+js/                 14 classic scripts                      (ORDER MATTERS)
   data.js           colours, checklists, timezone + country tables, flags
   state.js          the S object, localStorage load/save
   config.js         time dropdowns, sim mode, prereqs, config form
@@ -48,29 +59,59 @@ js/                 13 classic scripts                      (ORDER MATTERS)
   optimizer.js      stint schedule optimiser
   nav.js            tab navigation
   sync.js           broadcast sync client
+  actions.js        data-action registry + delegated dispatcher (Step 5)
   main.js           boot sequence - MUST LOAD LAST
   pwa.js            service worker registration + update toast
 sw.js               service worker
 assets/logo.svg     4.8 KB vector logo
 wrangler.toml       for a future Cloudflare Workers deploy, not yet used
+tools/              verification harness, see Verification standard below
+  serve.ps1         static localhost server, .NET only, no node needed
+  harness.js        deterministic seed + per-tab markup hashing
+  functional.js     37 real-DOM-event tests over the delegated wiring
+  baseline.json     hashes captured at tag v5-pre-delegation
+.claude/launch.json starts tools/serve.ps1 on port 5173
 ```
 
 ---
 
 ## Conventions that will bite you
 
-**The scripts are CLASSIC, not ES modules, and that is deliberate.** The markup
-has 63 inline `onclick=` handlers that resolve against global scope. Converting
-to modules scopes every declaration to its file and breaks all 63 at once.
-Replace the handlers with delegation FIRST, then convert. Not the other way.
+**The scripts are CLASSIC, not ES modules, and that is deliberate.** Converting
+to modules scopes every declaration to its file. Step 5 removed the inline
+handlers that made that fatal, but the dependency is not gone, only moved: the
+dispatcher in `js/actions.js` still resolves `saveDrv`, `pg` and 64 others from
+global scope. Step 6 must keep those reachable, by importing them into
+`actions.js` or by registering them explicitly.
+
+**Markup names an ACTION, never a function.** `data-action="stint.note"` plus
+`data-i="3"`, and `js/actions.js` maps that to a function that reads the dataset
+and does its own coercion. Three rules that are easy to break:
+
+- **`blur` does not bubble.** The five former `onblur` handlers are registered
+  as `focusout`. Use `blur` and the schedule table's Actual End / Actual Laps /
+  Position boxes stop saving with no error anywhere.
+- **Dispatch uses `closest()`, nearest ancestor wins.** That is what replaced
+  the old `event.stopPropagation()` calls in goals and checklists, where a
+  delete button sits inside a clickable row. Resolve to the outermost match
+  instead and every delete also toggles.
+- **One element, one `data-action`.** An element needing two events (save on
+  focusout, blur on Enter; a goal row handling all three drag events) gets ONE
+  action whose `run()` switches on `e.type`.
+
+Actions are gated by event type, so `config.save` fires on `input` only and a
+text box does not also fire it on the trailing `change`.
 
 **Load order is load order.** `js/main.js` holds the only top-level executable
 code and must stay last. In CSS, `styles/pages.css` must stay last because its
 media queries override everything above.
 
-**Both splits are verbatim extractions.** Concatenating the files reproduces the
-original inline blocks exactly. If you rewrite while moving, that property is
-gone and so is the ability to prove nothing broke.
+**The splits were verbatim extractions, and Step 5 ended that.** Concatenating
+the files used to reproduce the original inline blocks exactly. Replacing the
+handlers necessarily edited `index.html`, `schedule.js`, `drivers.js`,
+`goals.js` and `main.js`, so that property is gone for good. The replacement
+proof is `tools/baseline.json`: rendered markup hashed per tab at
+`v5-pre-delegation` and required to match afterwards.
 
 **Bump `CACHE_VERSION` in `sw.js` on every release.** Otherwise installed phones
 keep serving the old cached app.
@@ -79,18 +120,49 @@ keep serving the old cached app.
 
 ## Verification standard
 
-Every structural change so far was proven, not eyeballed. Keep this up:
+Every structural change so far was proven, not eyeballed. Keep this up.
 
-1. Concatenate the split files and diff against the original block, normalising
-   whitespace. Must be identical.
-2. `node --check` every JS file.
-3. Screenshot the app at 430x932 and pixel-diff against tag `v5-original`.
-   Expect 0.018% difference, all of it inside the logo bounding box.
-4. Run original and modified builds side by side headless: confirm every inline
-   handler still resolves to a function, all six tabs render the same, and
-   building a 6-hour schedule yields the same stint count and output.
+**There is no `node`, `npm` or usable `python` on Michael's machine.** The
+`node --check` step in the old version of this standard could never have run
+here. Use the browser instead, which suits DOM work better anyway.
 
-Tag `v5-original` is the rollback point. It is the untouched single-file app.
+**Tag `v5-original` does not exist.** Not locally, not on the remote. It was
+referenced as the rollback point but `git tag` and `git ls-remote --tags` both
+come back empty. The real rollback point is **`v5-pre-delegation`**, created at
+commit `04a66b3`, which is the state just before Step 5.
+
+To run the app locally:
+
+```bash
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/serve.ps1 -Root . -Port 5173 -BlockSW
+```
+
+`-BlockSW` makes `sw.js` 404 so a service worker cannot serve stale files
+mid-test. `tools/*` is also exposed at `/__harness/`.
+
+Then, in the page:
+
+1. **Deterministic state.** `LUM.seed()`, reload, `LUM.capture()`. Capture
+   mutates state, so it is only valid as the first call after a fresh reload,
+   and it pins the clock to 2026-09-12T15:30Z. Without that pin the Ops
+   dashboard and header strip re-render every second and every hash is noise.
+2. **Markup equivalence.** Compare the per-tab hashes against
+   `tools/baseline.json`. The hashes strip `on*` and `data-*` wiring attributes,
+   so pre- and post-change markup is directly comparable.
+3. **Function reachability.** `LUM.globals()` asserts all 66 functions the
+   dispatcher calls still exist. `LUM.wiring()` asserts zero inline handlers
+   remain, every `data-action` in the DOM is registered, and every registered
+   action is actually used. Both directions, so typos fail loudly.
+4. **Behaviour.** `LUMTEST.run()` dispatches real bubbling DOM events and
+   asserts the resulting state change. Identical markup proves the pages look
+   right; it proves nothing about whether a click still does anything.
+5. **Syntax.** Fetch each JS file and `new Function(src)` to parse without
+   executing. This is the `node --check` replacement.
+6. **Visual.** Screenshot at 430x932 and compare.
+
+Step 5 passed all six: markup identical on all six tabs plus strip and modals,
+66/66 functions reachable, 0 inline handlers, 0 unregistered actions, 0 unused
+registrations, 37/37 behaviour tests, 15/15 files parse.
 
 ---
 
@@ -103,21 +175,35 @@ Tag `v5-original` is the rollback point. It is the untouched single-file app.
 | 2 | Deployed. GitHub Pages, auto-deploys on push |
 | 3 | Split the 300-line `<style>` block into four stylesheets |
 | 4 | Split the 998-line `<script>` block into 13 files. index.html now 40 KB |
+| 5 | Replaced all 117 inline handlers with `data-action` + delegation. Tagged `v5-pre-delegation` first. Added `js/actions.js` and `tools/` |
+
+Step 5 note: the old plan said "63 inline `onclick=` handlers" and "one
+delegated listener". The onclick count was right (47 in `index.html`, 16 in JS
+template literals) but it omitted 54 more handlers across five other event
+types: 25 `oninput`, 17 `onchange`, 5 `onblur`, 4 `onkeydown`, 3 drag. All 117
+are gone. It takes eight delegated listeners, not one, because each event type
+needs its own.
 
 ---
 
 ## What is next
 
-**Step 5. Replace the 63 inline `onclick=` handlers** with `data-action`
-attributes and one delegated listener. Prerequisite for everything below.
-
-**Step 6. Convert to ES modules.** Only after 5.
+**Step 6. Convert to ES modules.** Now unblocked. The markup no longer names any
+function, but `js/actions.js` still resolves 66 of them from global scope, so
+that file is the one that has to change shape. Re-run the Verification standard
+against `tools/baseline.json` afterwards: the rendered markup must still match.
 
 **Steps 7 to 9 ship together. This is the big one.**
 
 Michael runs **multiple cars in one event** (Wildthings has fielded four) and
 possibly two teams at two events at once. The current one-global-state model
-cannot express that. The reshape:
+cannot express that.
+
+This is confirmed by how he worked before this app existed: his spreadsheet
+workflow was **one sheet per car per event**. The Entry concept below is not a
+speculative generalisation, it is the shape he was already maintaining by hand.
+
+The reshape:
 
 - **Team** - one team, one team key carried in an invite link. Holds the entry
   list and presence.

@@ -4,7 +4,8 @@
 
    Extracted verbatim from index.html lines 1547-1581.
    These are CLASSIC scripts, not ES modules: top-level declarations stay in the
-   shared global scope so the existing inline onclick= handlers keep working.
+   shared global scope, where the delegated dispatcher in js/actions.js resolves
+   them by name. No inline on*= handlers remain in the markup (Step 5).
    LOAD ORDER MATTERS - js/main.js must be last. */
 
 // SYNC — TEAMMATE SHARING (broadcast model)

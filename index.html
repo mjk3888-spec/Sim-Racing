@@ -90,7 +90,7 @@
         </div>
       </div>
     </div>
-    <div class="s-block s-hide-sm" style="min-width:110px;cursor:pointer;border-left:1px solid var(--border);" onclick="pg('config')">
+    <div class="s-block s-hide-sm" style="min-width:110px;cursor:pointer;border-left:1px solid var(--border);" data-action="nav" data-page="config">
       <div class="s-label">Live Sync</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
         <span class="s-sync-dot" id="sync-dot" style="background:var(--muted)"></span>
@@ -102,12 +102,12 @@
 </div>
 
 <div id="nav">
-  <div class="tab on"  onclick="pg('ops')">Dashboard</div>
-  <div class="tab"     onclick="pg('config')">Team / Event Config</div>
-  <div class="tab"     onclick="pg('schedule')">Stint Schedule</div>
-  <div class="tab"     onclick="pg('avail')">Availability</div>
-  <div class="tab"     onclick="pg('fuel')">Pit Strategy</div>
-  <div class="tab"     onclick="pg('goals')">Goals &amp; Checklists</div>
+  <div class="tab on"  data-action="nav" data-page="ops">Dashboard</div>
+  <div class="tab"     data-action="nav" data-page="config">Team / Event Config</div>
+  <div class="tab"     data-action="nav" data-page="schedule">Stint Schedule</div>
+  <div class="tab"     data-action="nav" data-page="avail">Availability</div>
+  <div class="tab"     data-action="nav" data-page="fuel">Pit Strategy</div>
+  <div class="tab"     data-action="nav" data-page="goals">Goals &amp; Checklists</div>
 </div>
 
 <div id="main">
@@ -142,15 +142,15 @@
     </div>
     <div>
       <div class="card">
-        <div class="sec-head">Team Goals <span id="goals-dash-status" style="font-family:var(--mono);font-size:0.56rem;color:var(--muted);margin-left:6px"></span><button class="btn sm" style="margin-left:auto" onclick="pg('goals')">Manage →</button></div>
+        <div class="sec-head">Team Goals <span id="goals-dash-status" style="font-family:var(--mono);font-size:0.56rem;color:var(--muted);margin-left:6px"></span><button class="btn sm" style="margin-left:auto" data-action="nav" data-page="goals">Manage →</button></div>
         <div id="goals-dash-list"><div style="color:var(--muted);font-size:0.68rem">No goals set.</div></div>
       </div>
       <div class="card">
         <div class="sec-head">Quick Log</div>
         <div class="brow" style="gap:8px">
-          <button class="btn bl" onclick="quickLog('pit-in')">▸ Pit In</button>
-          <button class="btn gn" onclick="quickLog('pit-out')">◂ Pit Out</button>
-          <button class="btn rd" onclick="quickLog('contact')">⚠ Contact / Damage</button>
+          <button class="btn bl" data-action="log.quick" data-type="pit-in">▸ Pit In</button>
+          <button class="btn gn" data-action="log.quick" data-type="pit-out">◂ Pit Out</button>
+          <button class="btn rd" data-action="log.quick" data-type="contact">⚠ Contact / Damage</button>
         </div>
         <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-top:8px;text-transform:none">One tap timestamps the event. Appears in the Race Status Log below.</div>
       </div>
@@ -174,7 +174,7 @@
     <div class="sec-head" style="color:var(--red);border-color:var(--red-border)">Schedule Prerequisites</div>
     <div id="prereq-list"></div>
     <div id="prereq-ready" style="display:none;margin-top:12px">
-      <button class="btn gn" style="width:100%;justify-content:center;padding:12px;font-size:0.55rem;letter-spacing:0.22em;" onclick="pg('schedule')">✓ All Prerequisites Met — View Stint Schedule →</button>
+      <button class="btn gn" style="width:100%;justify-content:center;padding:12px;font-size:0.55rem;letter-spacing:0.22em;" data-action="nav" data-page="schedule">✓ All Prerequisites Met — View Stint Schedule →</button>
     </div>
   </div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
@@ -183,17 +183,17 @@
       <div class="card">
         <div class="sec-head">Race Identity</div>
         <div class="field"><label>Sim Platform</label>
-          <select id="cfg-sim" onchange="sc();applySimMode();">
+          <select id="cfg-sim" data-action="config.sim-change">
             <option value="">— Select Sim —</option>
             <option value="iracing">iRacing</option>
             <option value="lmu">Le Mans Ultimate</option>
             <option value="other">Other</option>
           </select>
         </div>
-        <div class="field"><label>Event Name</label><input id="cfg-name" oninput="sc();checkPrereqs()"></div>
+        <div class="field"><label>Event Name</label><input id="cfg-name" data-action="config.save-check"></div>
         <div class="frow3">
           <div class="field"><label>Car Class</label>
-            <input id="cfg-class" list="class-options" oninput="sc()" placeholder="Select or type...">
+            <input id="cfg-class" list="class-options" data-action="config.save" placeholder="Select or type...">
             <datalist id="class-options">
               <option value="GTP"><option value="LMDh"><option value="Hypercar">
               <option value="LMP2"><option value="LMP3"><option value="GT3">
@@ -201,16 +201,16 @@
               <option value="TCR"><option value="Prototype">
             </datalist>
           </div>
-          <div class="field"><label>Car</label><input id="cfg-car" oninput="sc()"></div>
-          <div class="field"><label>Track</label><input id="cfg-track" oninput="sc()"></div>
+          <div class="field"><label>Car</label><input id="cfg-car" data-action="config.save"></div>
+          <div class="field"><label>Track</label><input id="cfg-track" data-action="config.save"></div>
         </div>
       </div>
       <div class="card">
         <div class="sec-head">Race Timing</div>
         <div class="frow">
-          <div class="field"><label>Race Date (GMT)</label><input type="date" id="cfg-date" onchange="sc();checkPrereqs();"></div>
+          <div class="field"><label>Race Date (GMT)</label><input type="date" id="cfg-date" data-action="config.date-change"></div>
           <div class="field"><label>Green Flag Offset</label>
-            <select id="cfg-green" onchange="sc()">
+            <select id="cfg-green" data-action="config.save-change">
               <option value="0">0 min</option><option value="10">10 min</option><option value="15">15 min</option>
               <option value="20">20 min</option><option value="30">30 min</option><option value="40" selected>40 min</option>
               <option value="45">45 min</option><option value="50">50 min</option><option value="60">60 min</option>
@@ -220,24 +220,24 @@
         <div class="frow3">
           <div class="field"><label>Session Start (GMT)</label>
             <div class="time-pair">
-              <select id="cfg-hour-h" onchange="syncHourDrop();sc();checkPrereqs();"></select>
+              <select id="cfg-hour-h" data-action="config.hour-change"></select>
               <span class="tsep">:</span>
-              <select id="cfg-hour-m" onchange="syncHourDrop();sc();checkPrereqs();"></select>
+              <select id="cfg-hour-m" data-action="config.hour-change"></select>
             </div>
           </div>
           <div class="field"><label>Race Duration</label>
             <div class="time-pair">
-              <select id="cfg-dur-h" onchange="syncDurDrop();sc();checkPrereqs();"></select>
+              <select id="cfg-dur-h" data-action="config.dur-change"></select>
               <span class="tsep">h</span>
-              <select id="cfg-dur-m" onchange="syncDurDrop();sc();checkPrereqs();"></select>
+              <select id="cfg-dur-m" data-action="config.dur-change"></select>
               <span class="tsep">m</span>
             </div>
           </div>
           <div class="field"><label>In-Game Start</label>
             <div class="time-pair">
-              <select id="cfg-ighr-h" onchange="syncIghrDrop();sc();"></select>
+              <select id="cfg-ighr-h" data-action="config.ighr-change"></select>
               <span class="tsep">:</span>
-              <select id="cfg-ighr-m" onchange="syncIghrDrop();sc();"></select>
+              <select id="cfg-ighr-m" data-action="config.ighr-change"></select>
             </div>
           </div>
         </div>
@@ -256,16 +256,16 @@
           </div>
         </div>
         <div class="frow3">
-          <div class="field"><label>Tank Size (L)</label><input type="number" id="cfg-tank" oninput="sc()"></div>
-          <div class="field"><label>Pit Duration (m:ss)</label><input id="cfg-pit" oninput="sc()"></div>
-          <div class="field"><label>Fuel Reserve (L)</label><input type="number" id="cfg-res" step="0.5" oninput="sc()"></div>
+          <div class="field"><label>Tank Size (L)</label><input type="number" id="cfg-tank" data-action="config.save"></div>
+          <div class="field"><label>Pit Duration (m:ss)</label><input id="cfg-pit" data-action="config.save"></div>
+          <div class="field"><label>Fuel Reserve (L)</label><input type="number" id="cfg-res" step="0.5" data-action="config.save"></div>
         </div>
       </div>
       <div class="card"><div class="sec-head">Calculated Summary</div><div id="cfg-calc"><div style="color:var(--muted);font-size:0.68rem">Add driver pace data to calculate.</div></div></div>
     </div>
     <div>
       <div class="card">
-        <div class="sec-head">Driver Roster<button class="btn sm pk" style="margin-left:auto" onclick="openDrvModal()">+ Add Driver</button></div>
+        <div class="sec-head">Driver Roster<button class="btn sm pk" style="margin-left:auto" data-action="driver.add">+ Add Driver</button></div>
         <div id="drv-list"></div>
         <div id="iracing-block">
           <div class="sec-head" style="margin-top:14px">Team iRating</div>
@@ -273,20 +273,20 @@
         </div>
       </div>
       <div class="card">
-        <div class="sec-head">Car Settings<div class="brow" style="margin-left:auto;gap:6px"><button class="btn sm" onclick="addCol()">+ Column</button><button class="btn sm rd" onclick="removeLastCol()">- Column</button></div></div>
+        <div class="sec-head">Car Settings<div class="brow" style="margin-left:auto;gap:6px"><button class="btn sm" data-action="settings.add-col">+ Column</button><button class="btn sm rd" data-action="settings.remove-col">- Column</button></div></div>
         <div class="twrap" style="overflow-x:auto"><table id="settings-table"><thead><tr id="settings-head"></tr></thead><tbody id="settings-tbody"></tbody></table></div>
         <div style="font-family:var(--mono);font-size:0.52rem;color:var(--orange);margin-top:4px">Orange = Values Differ Between Drivers</div>
       </div>
       <div class="card">
-        <div class="sec-head">Testing Notes<button class="btn sm" style="margin-left:auto" onclick="openTNote()">+ Add Note</button></div>
+        <div class="sec-head">Testing Notes<button class="btn sm" style="margin-left:auto" data-action="tnote.open">+ Add Note</button></div>
         <div id="tnotes-list"></div>
       </div>
       <div class="card">
         <div class="sec-head">Archive &amp; Export</div>
         <div class="brow" style="gap:8px;margin-bottom:6px">
-          <button class="btn gn" onclick="archiveEvent()">⬇ Archive This Event</button>
-          <button class="btn bl" onclick="exportScheduleCSV()">⎙ Export Schedule CSV</button>
-          <button class="btn" onclick="exportScheduleText()">⎙ Copy Rotation</button>
+          <button class="btn gn" data-action="archive.save">⬇ Archive This Event</button>
+          <button class="btn bl" data-action="export.csv">⎙ Export Schedule CSV</button>
+          <button class="btn" data-action="export.text">⎙ Copy Rotation</button>
         </div>
         <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Archive saves a snapshot of this event you can reload later. CSV and Copy give you a clean rotation to drop in Discord.</div>
         <div id="archive-list"></div>
@@ -303,8 +303,8 @@
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <input id="sync-url-input" style="flex:1;text-transform:none" placeholder="Paste Web App URL here...">
-          <button class="btn bl" onclick="saveSyncUrl()">Connect</button>
-          <button class="btn rd" onclick="disconnectSync()">Disconnect</button>
+          <button class="btn bl" data-action="sync.connect">Connect</button>
+          <button class="btn rd" data-action="sync.disconnect">Disconnect</button>
         </div>
         <div id="sync-url-disp" style="display:none" class="sync-url-disp"></div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
@@ -332,17 +332,17 @@
         </select>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:1px">
-        <button class="btn pk" onclick="optimizeStints(false)">⚡ Optimize All Stints</button>
-        <button class="btn" onclick="optimizeStints(true)" style="color:var(--gulf);border-color:var(--gulf-border)">⚡ Optimize Unassigned</button>
+        <button class="btn pk" data-action="opt.run" data-scope="all">⚡ Optimize All Stints</button>
+        <button class="btn" data-action="opt.run" data-scope="unassigned" style="color:var(--gulf);border-color:var(--gulf-border)">⚡ Optimize Unassigned</button>
       </div>
     </div>
     <div id="opt-result" style="font-family:var(--mono);font-size:0.62rem;color:var(--muted);margin-top:10px;min-height:1em"></div>
   </div>
   <div class="card volt-l" style="padding:11px 14px;margin-bottom:10px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
     <div style="font-family:var(--display);font-size:0.44rem;font-weight:600;color:var(--volt);letter-spacing:0.16em;flex-shrink:0">Race Start</div>
-    <div class="field" style="margin:0;min-width:140px;flex:1"><label>Qualifying Driver</label><select id="sch-quali-driver" onchange="saveSchMeta()"><option value="">— Select Driver —</option></select></div>
-    <div class="field" style="margin:0;width:110px"><label>Starting Position</label><input id="sch-quali-pos" onblur="saveSchMetaPos()" onkeydown="if(event.key==='Enter')this.blur()"></div>
-    <div class="field" style="margin:0;flex:2;min-width:180px"><label>Qualifying Notes</label><input id="sch-quali-notes" oninput="saveSchMeta()"></div>
+    <div class="field" style="margin:0;min-width:140px;flex:1"><label>Qualifying Driver</label><select id="sch-quali-driver" data-action="sched.meta-driver"><option value="">— Select Driver —</option></select></div>
+    <div class="field" style="margin:0;width:110px"><label>Starting Position</label><input id="sch-quali-pos" data-action="sched.meta-pos"></div>
+    <div class="field" style="margin:0;flex:2;min-width:180px"><label>Qualifying Notes</label><input id="sch-quali-notes" data-action="sched.meta-notes"></div>
   </div>
   <div class="twrap" style="overflow-x:auto">
     <table id="stint-table"><thead><tr>
@@ -361,7 +361,7 @@
     <div class="frow" style="margin-bottom:10px;align-items:flex-end">
       <div class="field" style="margin:0;flex:2">
         <label>Driver</label>
-        <select id="av-drv-select" onchange="refreshAvTimeDrops()"></select>
+        <select id="av-drv-select" data-action="avail.driver-change"></select>
       </div>
       <div style="padding-bottom:9px;min-width:60px">
         <span id="av-tz-label" style="font-family:var(--mono);font-size:0.62rem;color:var(--gulf)"></span>
@@ -377,9 +377,9 @@
         <select id="av-to" style="width:130px"></select>
       </div>
       <div style="display:flex;gap:8px;padding-bottom:1px;flex-wrap:wrap">
-        <button class="btn rd" onclick="applyWindow('blocked')">✗ Not Available</button>
-        <button class="btn" onclick="applyWindow('maybe')" style="color:#FFD700;border-color:rgba(255,215,0,0.4)">~ Maybe</button>
-        <button class="btn gn" onclick="applyWindow('open')">✓ Available</button>
+        <button class="btn rd" data-action="avail.apply" data-state="blocked">✗ Not Available</button>
+        <button class="btn" data-action="avail.apply" data-state="maybe" style="color:#FFD700;border-color:rgba(255,215,0,0.4)">~ Maybe</button>
+        <button class="btn gn" data-action="avail.apply" data-state="open">✓ Available</button>
       </div>
     </div>
     <div style="font-family:var(--mono);font-size:0.56rem;color:var(--muted);margin-top:10px">
@@ -400,16 +400,16 @@
     <div class="sec-head">Strategy Comparator</div>
     <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:12px;text-transform:none">Compare stops over a remaining race window. Uses your driver pace and fuel data plus pit calibration from below.</div>
     <div class="frow3">
-      <div class="field"><label>Time Remaining (h:mm or min)</label><input id="cmp-remain" placeholder="6:00" oninput="calcCompare()"></div>
-      <div class="field"><label>Race Lap Time (m:ss)</label><input id="cmp-lap" placeholder="1:31.7" oninput="calcCompare()"></div>
-      <div class="field"><label>Race Burn / Lap (L)</label><input type="number" id="cmp-burn" step="0.01" placeholder="3.20" oninput="calcCompare()"></div>
+      <div class="field"><label>Time Remaining (h:mm or min)</label><input id="cmp-remain" placeholder="6:00" data-action="cmp.calc"></div>
+      <div class="field"><label>Race Lap Time (m:ss)</label><input id="cmp-lap" placeholder="1:31.7" data-action="cmp.calc"></div>
+      <div class="field"><label>Race Burn / Lap (L)</label><input type="number" id="cmp-burn" step="0.01" placeholder="3.20" data-action="cmp.calc"></div>
     </div>
     <div class="frow3">
-      <div class="field"><label>FS Lap Time (m:ss)</label><input id="cmp-fslap" placeholder="1:32.2" oninput="calcCompare()"></div>
-      <div class="field"><label>FS Burn / Lap (L)</label><input type="number" id="cmp-fsburn" step="0.01" placeholder="3.07" oninput="calcCompare()"></div>
-      <div class="field"><label>Usable Fuel / Stint (L)</label><input type="number" id="cmp-usable" step="1" placeholder="99" oninput="calcCompare()"></div>
+      <div class="field"><label>FS Lap Time (m:ss)</label><input id="cmp-fslap" placeholder="1:32.2" data-action="cmp.calc"></div>
+      <div class="field"><label>FS Burn / Lap (L)</label><input type="number" id="cmp-fsburn" step="0.01" placeholder="3.07" data-action="cmp.calc"></div>
+      <div class="field"><label>Usable Fuel / Stint (L)</label><input type="number" id="cmp-usable" step="1" placeholder="99" data-action="cmp.calc"></div>
     </div>
-    <div class="brow" style="margin-bottom:6px"><button class="btn sm bl" onclick="prefillCompare()">↻ Pull From Event Data</button></div>
+    <div class="brow" style="margin-bottom:6px"><button class="btn sm bl" data-action="cmp.prefill">↻ Pull From Event Data</button></div>
     <div id="cmp-results" style="margin-top:10px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter values or pull from event data.</div></div>
   </div>
 
@@ -418,9 +418,9 @@
     <div class="sec-head">Fuel Calculator</div>
     <div class="fcalc">
       <div class="frow3">
-        <div class="field"><label>Current Fuel (L)</label><input type="number" id="fc-fuel" step="0.1" oninput="calcFuel()"></div>
-        <div class="field"><label>Burn / Lap (L)</label><input type="number" id="fc-burn" step="0.01" oninput="calcFuel()"></div>
-        <div class="field"><label>Avg Lap (m:ss)</label><input id="fc-lap" oninput="calcFuel()"></div>
+        <div class="field"><label>Current Fuel (L)</label><input type="number" id="fc-fuel" step="0.1" data-action="fuel.calc"></div>
+        <div class="field"><label>Burn / Lap (L)</label><input type="number" id="fc-burn" step="0.01" data-action="fuel.calc"></div>
+        <div class="field"><label>Avg Lap (m:ss)</label><input id="fc-lap" data-action="fuel.calc"></div>
       </div>
       <div id="fc-results" style="margin-top:12px"><div style="color:var(--muted);font-family:var(--mono);font-size:0.68rem">Enter all three values above.</div></div>
     </div>
@@ -433,12 +433,12 @@
     <!-- Calibration inputs -->
     <div style="font-family:var(--display);font-size:0.42rem;font-weight:600;letter-spacing:0.2em;color:var(--muted);margin-bottom:4px;">Calibration — Pit Entry To Pit Exit</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:10px;text-transform:none">Time each scenario in practice from when you enter pit lane to when you exit.</div>
     <div class="frow">
-      <div class="field"><label>Full Stop — Full Fuel (sec, pit entry to exit)</label><input type="number" id="ps-full-fuel" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
-      <div class="field"><label>Half Stop — Half Fuel (sec, pit entry to exit)</label><input type="number" id="ps-half-fuel" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
+      <div class="field"><label>Full Stop — Full Fuel (sec, pit entry to exit)</label><input type="number" id="ps-full-fuel" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
+      <div class="field"><label>Half Stop — Half Fuel (sec, pit entry to exit)</label><input type="number" id="ps-half-fuel" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
     </div>
     <div class="frow">
-      <div class="field"><label>Full Stop + 2 Tires (sec, pit entry to exit)</label><input type="number" id="ps-2tire" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
-      <div class="field"><label>Full Stop + 4 Tires (sec, pit entry to exit)</label><input type="number" id="ps-4tire" step="0.1" placeholder="0.0" oninput="calcPit()"></div>
+      <div class="field"><label>Full Stop + 2 Tires (sec, pit entry to exit)</label><input type="number" id="ps-2tire" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
+      <div class="field"><label>Full Stop + 4 Tires (sec, pit entry to exit)</label><input type="number" id="ps-4tire" step="0.1" placeholder="0.0" data-action="pit.calc"></div>
     </div>
 
     <hr style="margin:14px 0;">
@@ -448,15 +448,15 @@
     <div class="frow3">
       <div class="field">
         <label>Fuel to Add (L)</label>
-        <input type="number" id="ps-fuel-add" step="0.5" placeholder="0.0" oninput="calcPit()">
+        <input type="number" id="ps-fuel-add" step="0.5" placeholder="0.0" data-action="pit.calc">
       </div>
       <div class="field">
         <label>Tank Size (L)</label>
-        <input type="number" id="ps-tank-size" step="1" placeholder="110" oninput="calcPit()">
+        <input type="number" id="ps-tank-size" step="1" placeholder="110" data-action="pit.calc">
       </div>
       <div class="field">
         <label>Tire Change</label>
-        <select id="ps-tires" onchange="calcPit()">
+        <select id="ps-tires" data-action="pit.calc-change">
           <option value="0">No Tires</option>
           <option value="2">2 Tires</option>
           <option value="4">4 Tires</option>
@@ -481,12 +481,12 @@
 <div id="page-goals" class="page">
   <div class="g2">
     <div><div class="card">
-      <div class="sec-head">Team Goals<button class="btn sm" onclick="openGoal()">+ Add Goal</button></div>
+      <div class="sec-head">Team Goals<button class="btn sm" data-action="goal.open">+ Add Goal</button></div>
       <div class="alert info" style="margin-bottom:10px;font-size:0.62rem">Drag ☰ to reorder.</div>
       <div id="goals-list"><div style="color:var(--muted);font-size:0.68rem">No goals set.</div></div>
     </div></div>
     <div><div class="card">
-      <div class="sec-head">Checklists<button class="btn sm" onclick="openCheck()">+ Add Item</button></div>
+      <div class="sec-head">Checklists<button class="btn sm" data-action="check.open">+ Add Item</button></div>
       <div style="margin-bottom:12px">
         <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--volt);margin-bottom:8px">// Pre-Race</div>
         <div id="cl-pre"></div>
@@ -499,7 +499,7 @@
         <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--orange);margin-bottom:8px">// Post-Race</div>
         <div id="cl-post"></div>
       </div>
-      <div class="brow" style="margin-top:12px"><button class="btn sm rd" onclick="resetChecks()">Reset All</button></div>
+      <div class="brow" style="margin-top:12px"><button class="btn sm rd" data-action="check.reset">Reset All</button></div>
     </div></div>
   </div>
 </div>
@@ -511,8 +511,8 @@
 <div class="overlay" id="drv-overlay"><div class="modal">
   <div class="mtitle" id="drv-mtitle">Add Driver</div>
   <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
-    <select id="dm-lib" onchange="loadFromLib()" style="flex:1"></select>
-    <button class="btn xs rd" onclick="removeFromLib()" title="Remove selected driver from library">✕ Remove</button>
+    <select id="dm-lib" data-action="driver.lib-load" style="flex:1"></select>
+    <button class="btn xs rd" data-action="driver.lib-remove" title="Remove selected driver from library">✕ Remove</button>
   </div>
   <div class="frow"><div class="field"><label>Name</label><input id="dm-name"></div><div class="field"><label>Handle</label><input id="dm-handle"></div></div>
   <div class="frow3">
@@ -521,14 +521,14 @@
     <div class="field"><label>Color</label><input type="color" id="dm-color" style="height:38px;padding:2px"></div>
   </div>
   <div class="frow">
-    <div class="field" style="flex:2"><label>Timezone</label><select id="dm-tz" onchange="onTZChange()"></select></div>
+    <div class="field" style="flex:2"><label>Timezone</label><select id="dm-tz" data-action="driver.tz-change"></select></div>
     <div class="field"><label>Time Format</label><select id="dm-timefmt"><option value="24">24-Hour</option><option value="12">12-Hour</option></select></div>
   </div>
   <div id="dm-tz-info" style="font-family:var(--mono);font-size:0.62rem;color:var(--gulf);margin:-4px 0 12px;padding:5px 10px;border-left:2px solid var(--gulf-border);min-height:1em"></div>
   <div class="pace-head race" style="margin-bottom:11px">Max Race Pace</div>
   <div class="frow">
-    <div class="field"><label>Lap Time (m:ss)</label><input id="dm-lap" oninput="checkPrereqs()"></div>
-    <div class="field"><label>Fuel / Lap (L)</label><input type="number" id="dm-fpl" step="0.01" oninput="checkPrereqs()"></div>
+    <div class="field"><label>Lap Time (m:ss)</label><input id="dm-lap" data-action="config.check"></div>
+    <div class="field"><label>Fuel / Lap (L)</label><input type="number" id="dm-fpl" step="0.01" data-action="config.check"></div>
   </div>
   <div class="pace-head fsc" style="margin-bottom:11px">Fuel Save Pace</div>
   <div class="frow">
@@ -541,9 +541,9 @@
   </div>
   <input type="hidden" id="dm-idx">
   <div class="mfoot">
-    <button class="btn rd" id="dm-delete-btn" onclick="confirmDeleteDriver()" style="margin-right:auto;display:none">Delete</button>
-    <button class="btn" onclick="closeDrv()">Cancel</button>
-    <button class="btn pk" onclick="saveDrv()">Save Driver</button>
+    <button class="btn rd" id="dm-delete-btn" data-action="driver.delete" style="margin-right:auto;display:none">Delete</button>
+    <button class="btn" data-action="driver.close">Cancel</button>
+    <button class="btn pk" data-action="driver.save">Save Driver</button>
   </div>
 </div></div>
 
@@ -552,33 +552,33 @@
   <div class="frow"><div class="field"><label>Actual End (GMT hh:mm)</label><input id="note-end"></div><div class="field"><label>Actual Laps</label><input type="number" id="note-laps"></div></div>
   <div class="field"><label>Notes</label><textarea id="note-txt" rows="3" style="text-transform:none"></textarea></div>
   <input type="hidden" id="note-idx">
-  <div class="mfoot"><button class="btn" onclick="closeNote()">Cancel</button><button class="btn gn" onclick="markDone()">Mark Done ✓</button><button class="btn pk" onclick="saveNote()">Save</button></div>
+  <div class="mfoot"><button class="btn" data-action="note.close">Cancel</button><button class="btn gn" data-action="note.done">Mark Done ✓</button><button class="btn pk" data-action="note.save">Save</button></div>
 </div></div>
 
 <div class="overlay" id="col-overlay"><div class="modal" style="width:360px">
   <div class="mtitle">Add Setting Column</div>
   <div class="field"><label>Column Name</label><input id="col-name"></div>
-  <div class="mfoot"><button class="btn" onclick="document.getElementById('col-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="confirmCol()">Add</button></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="col-overlay">Cancel</button><button class="btn pk" data-action="settings.confirm-col">Add</button></div>
 </div></div>
 
 <div class="overlay" id="goal-overlay"><div class="modal" style="width:420px">
   <div class="mtitle">Add Team Goal</div>
   <div class="field"><label>Goal</label><textarea id="goal-txt" rows="2" style="text-transform:none"></textarea></div>
-  <div class="mfoot"><button class="btn" onclick="document.getElementById('goal-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="saveGoal()">Add</button></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="goal-overlay">Cancel</button><button class="btn pk" data-action="goal.save">Add</button></div>
 </div></div>
 
 <div class="overlay" id="check-overlay"><div class="modal" style="width:440px">
   <div class="mtitle">Add Checklist Item</div>
   <div class="field"><label>Category</label><select id="check-cat"><option value="pre">Pre-Race</option><option value="swap">Driver Change</option><option value="post">Post-Race</option></select></div>
   <div class="field"><label>Item</label><textarea id="check-txt" rows="2" style="text-transform:none"></textarea></div>
-  <div class="mfoot"><button class="btn" onclick="document.getElementById('check-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="saveCheck()">Add</button></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="check-overlay">Cancel</button><button class="btn pk" data-action="check.save">Add</button></div>
 </div></div>
 
 <div class="overlay" id="tnote-overlay"><div class="modal">
   <div class="mtitle">Add Testing Note</div>
   <div class="frow"><div class="field"><label>Driver</label><select id="tn-drv"></select></div><div class="field"><label>Best Lap</label><input id="tn-lap" style="text-transform:none"></div></div>
   <div class="frow4"><div class="field"><label>Air Temp</label><input type="number" id="tn-air" step="0.1"></div><div class="field"><label>Track Temp</label><input type="number" id="tn-trk" step="0.1"></div><div class="field"><label>Unit</label><select id="tn-unit"><option value="C">°C</option><option value="F">°F</option></select></div><div class="field"><label>Fuel/Burn</label><input id="tn-fuel" style="text-transform:none"></div></div>
-  <div class="mfoot"><button class="btn" onclick="document.getElementById('tnote-overlay').classList.remove('on')">Cancel</button><button class="btn pk" onclick="saveTNote()">Add Note</button></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="tnote-overlay">Cancel</button><button class="btn pk" data-action="tnote.save">Add Note</button></div>
 </div></div>
 
 <div class="overlay" id="dmg-overlay"><div class="modal" style="width:380px">
@@ -587,8 +587,8 @@
   <div class="field"><label>Repair Time (m:ss or minutes)</label><input id="dmg-time-input" style="font-size:1rem;padding:10px 12px"></div>
   <input type="hidden" id="dmg-idx">
   <div class="mfoot">
-    <button class="btn" onclick="document.getElementById('dmg-overlay').classList.remove('on');S.stints[parseInt(document.getElementById('dmg-idx').value)].damage=false;renderSchedule();">Cancel</button>
-    <button class="btn pk" onclick="saveDamageModal()">Confirm Damage</button>
+    <button class="btn" data-action="damage.cancel">Cancel</button>
+    <button class="btn pk" data-action="damage.save">Confirm Damage</button>
   </div>
 </div></div>
 
@@ -603,6 +603,7 @@
 <script src="js/optimizer.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/sync.js"></script>
+<script src="js/actions.js"></script>
 <script src="js/main.js"></script>
 <script src="js/pwa.js"></script>
 </body>
