@@ -1,5 +1,29 @@
-name = "luminary"
+# LUMINARY ENDURANCE MANAGER — sync backend only.
+#
+# The APP is NOT deployed here. It stays on GitHub Pages, which already works
+# and redeploys on push. This Worker is a pure API, so there is deliberately no
+# [assets] block: adding one would make Cloudflare a second place the app is
+# served from, and a Cloudflare problem could then take the app down rather than
+# just its syncing.
+#
+# Free tier is ample: Workers and Durable Objects allow 100k requests/day and
+# 13,000 GB-s/day of DO duration. A six hour race with six drivers is roughly
+# 2,700 GB-s, and the Hibernation API means idle connections cost nothing.
+#
+# new_sqlite_classes (not new_classes) is required: SQLite-backed Durable
+# Objects are what the free plan provides.
+
+name = "luminary-sync"
+main = "worker/index.js"
 compatibility_date = "2026-08-13"
 
-[assets]
-directory = "./"
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "TEAM"
+class_name = "TeamRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["TeamRoom"]
