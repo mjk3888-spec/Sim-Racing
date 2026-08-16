@@ -9,7 +9,7 @@
    they no-op harmlessly here. v1's boot file (main.js) is deliberately NOT
    loaded, because this file is the boot sequence instead. */
 
-const V2_BUILD = '2026-08-16.13';
+const V2_BUILD = '2026-08-16.14';
 
 /* ---------- helpers ---------- */
 const q = s => document.querySelector(s);
@@ -92,11 +92,14 @@ function renderRace() {
   }
   q('#race-ig').textContent = ig;
 
+  /* Quick Log is three big buttons you hit fast with one hand, so mis-taps are
+     going to happen. Every entry therefore carries its own delete. */
   const feed = q('#race-feed');
-  const rows = (S.raceLog || []).slice(-6).reverse().map(l =>
-    '<div class="feed-row"><span class="t">' + fmtGMT(new Date(l.ts)) + '</span><span>'
-    + l.label + (l.driver ? ' · ' + l.driver : '') + '</span></div>').join('');
-  feed.innerHTML = rows || '<div class="feed-row"><span class="t">—</span><span>Nothing logged yet</span></div>';
+  const rows = (S.raceLog || []).slice(-8).reverse().map(l =>
+    '<div class="feed-row"><span class="t">' + fmtGMT(new Date(l.ts)) + '</span>'
+    + '<span class="fx">' + l.label + (l.driver ? ' · ' + l.driver : '') + '</span>'
+    + '<button class="feed-del" data-v2act="unlog" data-id="' + l.id + '" title="Remove">✕</button></div>').join('');
+  feed.innerHTML = rows || '<div class="feed-row"><span class="t">—</span><span class="fx">Nothing logged yet</span></div>';
 }
 
 /* ---------- PLAN ---------- */
@@ -259,6 +262,7 @@ function v2Init() {
     if (!a) return;
     const act = a.dataset.v2act;
     if (act === 'log') { quickLog(a.dataset.type); v2Render(); }
+    else if (act === 'unlog') { delLogEntry(+a.dataset.id); v2Render(); }
     else if (act === 'stint') openStint(+a.dataset.i);
     else if (act === 'stint-save') saveStint(false);
     else if (act === 'stint-done') saveStint(true);

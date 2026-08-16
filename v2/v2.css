@@ -231,3 +231,10 @@ button.wide.ghost{background:var(--s2);color:var(--tx2);}
   .tiles{grid-template-columns:repeat(4,1fr);}
   .hero-time{font-size:80px;}
 }
+
+/* Feed rows carry their own delete: Quick Log is three big one-handed buttons
+   and mis-taps are inevitable, so removing one has to be as easy as adding it. */
+.feed-row .fx{flex:1;min-width:0;}
+.feed-del{background:none;border:0;color:var(--tx3);font-size:var(--f3);
+  padding:4px 8px;cursor:pointer;flex-shrink:0;line-height:1;border-radius:8px;}
+.feed-del:active{background:var(--s3);color:var(--red);}
