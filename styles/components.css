@@ -206,3 +206,16 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
   margin-top:4px;word-break:break-all;}
 #live-key-warn{font-family:var(--mono);font-size:var(--fs-sm);color:var(--yellow);
   text-transform:none;line-height:1.5;margin-top:var(--sp-2);}
+
+/* COLLAPSIBLE SECTIONS. Finished setup folds away but keeps a readable summary
+   in its header, so the state is still visible at a glance and one tap brings
+   the detail back. */
+[data-collapse].is-collapsed .collapse-body{display:none;}
+.collapse-chev{margin-left:auto;padding-left:var(--sp-2);color:var(--muted);
+  font-size:var(--fs-md);flex-shrink:0;}
+.collapse-summary{font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted);
+  letter-spacing:0;text-transform:none;margin-left:var(--sp-2);font-weight:400;}
+.collapse-summary.ok{color:var(--green);}
+.collapse-summary.warn{color:var(--yellow);}
+/* A collapsed card should read as a single tidy line, not a card with a gap. */
+[data-collapse].is-collapsed>.sec-head{margin-bottom:0;border-bottom:none;padding-bottom:0;}

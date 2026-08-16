@@ -47,6 +47,7 @@ function checkPrereqs(){
   if(list)list.innerHTML=reqs.map(r=>`<div class="prereq-item ${r.met?'met':''}"><span class="prereq-icon">${r.met?'✓':'✗'}</span><span>${r.label}</span></div>`).join('');
   if(block)block.className=allMet?'card green-l':'card red-l';
   if(ready)ready.style.display=allMet?'block':'none';
+  try{renderCollapseSummaries();}catch(e){}
   if(allMet&&!S.stints.length)buildStints();
   return allMet;
 }

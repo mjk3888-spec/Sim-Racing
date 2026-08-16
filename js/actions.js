@@ -110,6 +110,8 @@ const ACTIONS = {
   'live.disconnect': { run: () => liveDisconnect() },
   'live.new':        { run: () => liveNewTeam() },
   'team.open':       { run: () => openTeamPanel() },
+  // Collapsible sections: finished setup gets out of the way, one tap to return.
+  'ui.collapse':     { run: (e, t) => toggleCollapse(t.dataset.id) },
   'team.close':      { run: () => closeTeamPanel() },
   'team.name':       { on: 'input',  run: () => saveTeamName() },
   'team.logo':       { on: 'change', run: (e, t) => onTeamLogoPicked(t) },

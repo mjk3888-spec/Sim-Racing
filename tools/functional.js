@@ -568,6 +568,53 @@ window.LUMTEST = (function () {
         return S.stints[0].damage === false || 'damage stayed set with no repair time';
       });
 
+      // ---- COLLAPSIBLE SECTIONS --------------------------------------------
+      const collapsed = id => {
+        const c = document.querySelector('[data-collapse="' + id + '"]');
+        return c ? c.classList.contains('is-collapsed') : null;
+      };
+      check('collapse: finished setup folds itself away, once', () => {
+        localStorage.removeItem('lum_collapsed');
+        pg('config');
+        applyCollapse();
+        renderCollapseSummaries();
+        return collapsed('prereq') === true
+          || 'prerequisites stayed expanded with all of them met';
+      });
+      check('collapse: reopening it STICKS, it does not re-close itself', () => {
+        // The worst version of this feature is a panel that keeps folding back
+        // up every time the app re-checks something you deliberately opened.
+        toggleCollapse('prereq');
+        if (collapsed('prereq') !== false) return 'did not reopen';
+        renderCollapseSummaries();
+        renderCollapseSummaries();
+        return collapsed('prereq') === false || 're-collapsed itself against the user';
+      });
+      check('collapse: a collapsed header still says what the state is', () => {
+        const s = $('#prereq-summary');
+        return (s && s.textContent.trim().length > 0)
+          || 'collapsed header shows no summary, so collapsing just hides information';
+      });
+      check('collapse: pit calibration folds but the live calculator does NOT', () => {
+        localStorage.removeItem('lum_collapsed');
+        pg('fuel');
+        ['ps-full-fuel', 'ps-half-fuel', 'ps-2tire', 'ps-4tire'].forEach((id, i) => {
+          const e = $('#' + id); e.value = String(40 + i * 5);
+          fire(e, 'input');
+        });
+        renderCollapseSummaries();
+        if (collapsed('pitcal') !== true) return 'calibration did not fold once complete';
+        // "Calculate This Stop" is used DURING a race and must never fold away
+        // with the setup above it.
+        return !!$('#ps-fuel-add').offsetParent || 'the live calculator got folded away too';
+      });
+      check('collapse: state is per device, never synced', () => {
+        // What is folded up on a phone has nothing to do with what a teammate
+        // wants to see, so it must not appear in the synced paths.
+        const paths = Object.keys(livePaths());
+        return !paths.some(p => /collaps/i.test(p)) || 'collapse state is being synced';
+      });
+
       // ---- SAMPLE EVENT ----------------------------------------------------
       // Destructive: replaces all state. Must stay LAST in this suite.
       check('demo.load: builds a complete, currently-running race', () => {

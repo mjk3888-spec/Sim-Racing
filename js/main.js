@@ -15,6 +15,7 @@ function loadState(){
   buildHourOpts();buildTimeDDs();
   populateConfig();buildCatalogLists();showBuildStamp();
   try{renderTeamIdentity();}catch(e){}
+  try{applyCollapse();renderCollapseSummaries();}catch(e){}
   renderDriverList();renderSettingsTable();
   renderChecklists();renderGoals();renderGoalsDash();renderTNotes();
   buildAvail();renderSchedule();loadSchMeta();updateDash();checkPrereqs();

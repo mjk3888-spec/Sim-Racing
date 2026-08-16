@@ -195,12 +195,14 @@
 </div>
 
 <div id="page-config" class="page">
-  <div id="prereq-block" class="card red-l" style="margin-bottom:14px">
-    <div class="sec-head" style="color:var(--red);border-color:var(--red-border)">Schedule Prerequisites</div>
+  <div id="prereq-block" class="card red-l" style="margin-bottom:14px" data-collapse="prereq">
+    <div class="sec-head" style="color:var(--red);border-color:var(--red-border);cursor:pointer" data-action="ui.collapse" data-id="prereq">Schedule Prerequisites<span class="collapse-summary" id="prereq-summary"></span><span class="collapse-chev">▾</span></div>
+    <div class="collapse-body">
     <div id="prereq-list"></div>
     <div id="prereq-ready" style="display:none;margin-top:12px">
       <button class="btn gn" style="width:100%;justify-content:center;padding:12px;font-size:0.55rem;letter-spacing:0.14em;white-space:normal;line-height:1.4;" data-action="nav" data-page="schedule">✓ All Prerequisites Met<br>View Stint Schedule →</button>
     </div>
+  </div>
   </div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
   <div class="g2" style="min-width:600px;">
@@ -313,8 +315,9 @@
         <div class="sec-head">Testing Notes<button class="btn sm" style="margin-left:auto" data-action="tnote.open">+ Add Note</button></div>
         <div id="tnotes-list"></div>
       </div>
-      <div class="card">
-        <div class="sec-head">Archive &amp; Export</div>
+      <div class="card" data-collapse="archive">
+        <div class="sec-head" style="cursor:pointer" data-action="ui.collapse" data-id="archive">Archive &amp; Export<span class="collapse-summary" id="archive-summary"></span><span class="collapse-chev">▾</span></div>
+        <div class="collapse-body">
         <div class="brow" style="gap:8px;margin-bottom:6px">
           <button class="btn gn" data-action="archive.save">⬇ Archive This Event</button>
           <button class="btn bl" data-action="export.csv">⎙ Export Schedule CSV</button>
@@ -324,6 +327,7 @@
         <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Load Sample Event fills the app with a complete 6-hour race already in progress, for testing. It replaces what is on this device.</div>
         <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Archive saves a snapshot of this event you can reload later. CSV and Copy give you a clean rotation to drop in Discord.</div>
         <div id="archive-list"></div>
+        </div>
       </div>
       <div class="card volt-l">
         <div class="sec-head">Team Sync</div>
@@ -453,8 +457,12 @@
   <div class="card volt-l">
     <div class="sec-head">Pit Stop Time Estimator</div>
 
-    <!-- Calibration inputs -->
-    <div style="font-family:var(--display);font-size:0.42rem;font-weight:600;letter-spacing:0.2em;color:var(--muted);margin-bottom:4px;">Calibration — Pit Entry To Pit Exit</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:10px;text-transform:none">Time each scenario in practice from when you enter pit lane to when you exit.</div>
+    <!-- Calibration inputs. Wrapped rather than putting data-collapse on the
+         card, because "Calculate This Stop" below is the part you use during a
+         race and must never fold away with the setup above it. -->
+    <div data-collapse="pitcal">
+    <div class="sec-head" style="cursor:pointer;margin-top:0" data-action="ui.collapse" data-id="pitcal">Calibration — Pit Entry To Pit Exit<span class="collapse-summary" id="pitcal-summary"></span><span class="collapse-chev">▾</span></div>
+    <div class="collapse-body" id="pitcal-body"><div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:10px;text-transform:none">Time each scenario in practice from when you enter pit lane to when you exit.</div>
     <div class="frow">
       <div class="field"><label>Full Stop — Full Fuel (sec, pit entry to exit)</label><input type="number" id="ps-full-fuel" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
       <div class="field"><label>Half Stop — Half Fuel (sec, pit entry to exit)</label><input type="number" id="ps-half-fuel" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
@@ -462,6 +470,8 @@
     <div class="frow">
       <div class="field"><label>Full Stop + 2 Tires (sec, pit entry to exit)</label><input type="number" id="ps-2tire" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
       <div class="field"><label>Full Stop + 4 Tires (sec, pit entry to exit)</label><input type="number" id="ps-4tire" step="0.1" inputmode="decimal" placeholder="0.0" data-action="pit.calc"></div>
+    </div>
+    </div>
     </div>
 
     <hr style="margin:14px 0;">
@@ -490,13 +500,15 @@
   </div>
 
   <!-- NOTES CARD -->
-  <div class="card">
-    <div class="sec-head">How To Use</div>
+  <div class="card" data-collapse="pithelp">
+    <div class="sec-head" style="cursor:pointer" data-action="ui.collapse" data-id="pithelp">How To Use<span class="collapse-chev">▾</span></div>
+    <div class="collapse-body">
     <div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-mid);line-height:1.8;text-transform:none">
       <div style="margin-bottom:6px"><span style="color:var(--volt);text-transform:uppercase">Calibration</span> — Time a full pit stop in practice with full fuel and no tires, half fuel and no tires, etc. Enter those baseline seconds above.</div>
       <div style="margin-bottom:6px"><span style="color:var(--volt);text-transform:uppercase">Fuel Time</span> — Interpolated linearly between half and full fill based on fuel added vs tank size.</div>
       <div><span style="color:var(--volt);text-transform:uppercase">Tire Time</span> — Added on top of fuel time. Choose 2, 4, or no tires for each stop.</div>
     </div>
+  </div>
   </div>
 
 </div>
@@ -699,6 +711,7 @@
 <script src="js/optimizer.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/sync.js"></script>
+<script src="js/collapse.js"></script>
 <script src="js/entries.js"></script>
 <script src="js/live.js"></script>
 <script src="js/demo.js"></script>
