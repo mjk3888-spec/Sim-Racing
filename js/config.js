@@ -22,7 +22,9 @@ function buildHourOpts(){buildTZSelect();} // Legacy call — now builds timezon
 
 // SIM MODE
 function applySimMode(){
-  S.config.sim=gv('cfg-sim');
+  // Same trap as syncAvg: reading the select unconditionally wiped S.config.sim
+  // whenever that select was not on the page.
+  if(el('cfg-sim'))S.config.sim=gv('cfg-sim');
   const isIR=S.config.sim==='iracing';
   const irB=el('iracing-block');const fsC=el('fs-card');
   if(irB)irB.style.display=isIR?'block':'none';
@@ -83,11 +85,30 @@ function populateConfig(){
   if(c.ighr!==''&&c.ighr!==null&&c.ighr!==undefined){const ih=Math.floor(parseFloat(c.ighr)||0);const im=Math.round(((parseFloat(c.ighr)||0)-ih)*60);sv('cfg-ighr-h',ih);sv('cfg-ighr-m',im);}
   syncAvg();calcSummary();applySimMode();checkPrereqs();
 }
+/* Averages the roster's pace into the event config.
+
+   This used to compute a value, write it into a form field with sv(), and then
+   read it straight back out with gv() to store in S. That round trip through
+   the DOM meant the state was only correct while that exact markup existed: if
+   the field was missing, sv() no-opped, gv() returned '' and the lap time was
+   silently WIPED, which then made buildStints() produce no stints at all.
+
+   It now computes once into a variable and assigns that to both. Same result in
+   v1, and it no longer depends on a particular page being on screen. */
 function syncAvg(){
+  const fmtMs=ms=>Math.floor(ms/60000)+':'+(((ms%60000)/1000).toFixed(1)).padStart(4,'0');
   const std=S.drivers.filter(d=>d.lap&&parseLap(d.lap)>0);
   const fs=S.drivers.filter(d=>d.fslap&&parseLap(d.fslap)>0);
-  if(std.length){const ms=std.reduce((a,d)=>a+parseLap(d.lap),0)/std.length;const fpl=std.reduce((a,d)=>a+parseFloat(d.fpl||0),0)/std.length;sv('cfg-lap',Math.floor(ms/60000)+':'+(((ms%60000)/1000).toFixed(1)).padStart(4,'0'));sv('cfg-fpl',fpl.toFixed(2));S.config.lap=gv('cfg-lap');S.config.fpl=gv('cfg-fpl');}
-  if(fs.length){const ms=fs.reduce((a,d)=>a+parseLap(d.fslap),0)/fs.length;const fb=fs.reduce((a,d)=>a+parseFloat(d.fsburn||0),0)/fs.length;sv('cfg-fslap',Math.floor(ms/60000)+':'+(((ms%60000)/1000).toFixed(1)).padStart(4,'0'));sv('cfg-fsburn',fb.toFixed(2));S.config.fslap=gv('cfg-fslap');S.config.fsburn=gv('cfg-fsburn');}
+  if(std.length){
+    const lap=fmtMs(std.reduce((a,d)=>a+parseLap(d.lap),0)/std.length);
+    const fpl=(std.reduce((a,d)=>a+parseFloat(d.fpl||0),0)/std.length).toFixed(2);
+    S.config.lap=lap;S.config.fpl=fpl;sv('cfg-lap',lap);sv('cfg-fpl',fpl);
+  }
+  if(fs.length){
+    const fslap=fmtMs(fs.reduce((a,d)=>a+parseLap(d.fslap),0)/fs.length);
+    const fsburn=(fs.reduce((a,d)=>a+parseFloat(d.fsburn||0),0)/fs.length).toFixed(2);
+    S.config.fslap=fslap;S.config.fsburn=fsburn;sv('cfg-fslap',fslap);sv('cfg-fsburn',fsburn);
+  }
 }
 function calcSummary(){
   const c=S.config;const lapMs=parseLap(c.lap);const tank=parseFloat(c.tank)||110;const res=parseFloat(c.res)||4;const fpl=parseFloat(c.fpl)||3.79;

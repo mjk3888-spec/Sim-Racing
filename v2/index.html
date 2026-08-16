@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>LUMINARY v2</title>
+<meta name="theme-color" content="#050505">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Luminary 2">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="v2.css">
+</head>
+<body>
+
+<!--
+  LUMINARY v2 — a second opinion on the same app.
+
+  WHAT I KEPT: every core function, the Luminary mark, volt as the identity,
+  the same live sync backend and the same data. Both versions read and write the
+  same team, so you can run them side by side on two devices and watch them
+  agree.
+
+  WHAT I CHANGED, AND WHY:
+
+  1. ORGANISED BY WHEN, NOT BY WHAT. v1 has six tabs, one per feature area. But
+     during a stint you only ever need four answers: who is in the car, how long
+     until the swap, what position are we, are we on fuel. Everything else is
+     preparation you did hours ago. So v2 has three places instead of six:
+     RACE is the live screen, PLAN is the schedule and strategy, TEAM is setup.
+
+  2. THE RACE SCREEN IS THE PRODUCT. One screen, no scrolling for the essentials,
+     numbers large enough to read from a rig at arm's length. v1 makes you scroll
+     past Fair Share and a stat grid to reach the countdown, which is the single
+     most important number in the app.
+
+  3. NAVIGATION AT THE BOTTOM. You hold a phone at the bottom. v1's tabs are at
+     the top, which on a modern iPhone is the hardest place to reach one-handed.
+
+  4. FEWER LINES. v1 draws a border around almost everything, so nothing stands
+     out. v2 uses background steps and space for grouping and saves outlines for
+     things that genuinely need attention.
+
+  5. ONE ACCENT. Volt means "this matters". Green and red mean good and bad.
+     Nothing else gets a colour, so the colours that remain actually carry
+     meaning.
+-->
+
+<div id="v2-splash"><img src="../assets/logo.svg" alt=""></div>
+
+<header id="v2-head">
+  <img id="v2-logo" src="../assets/logo.svg" alt="Luminary">
+  <button id="v2-entry" data-v2="entries">
+    <span class="lbl">Entry</span>
+    <span class="val" id="v2-entry-name">No Event</span>
+  </button>
+  <button id="v2-sync" data-v2="team" title="Team sync">
+    <span class="dot" id="v2-sync-dot"></span>
+  </button>
+</header>
+
+<main id="v2-main">
+
+  <!-- ============ RACE ============ -->
+  <section class="v2-screen on" id="screen-race">
+    <div class="hero" id="hero-block">
+      <div class="hero-label" id="hero-label">No active stint</div>
+      <div class="hero-time" id="hero-time">—</div>
+      <div class="hero-sub" id="hero-sub">Set up an event to begin</div>
+    </div>
+
+    <div class="swap" id="swap-block">
+      <div class="swap-side">
+        <div class="k">In car</div>
+        <div class="v" id="race-cur">—</div>
+        <div class="s" id="race-cur-sub"></div>
+      </div>
+      <div class="swap-arrow">→</div>
+      <div class="swap-side">
+        <div class="k">Next</div>
+        <div class="v" id="race-next">—</div>
+        <div class="s" id="race-next-sub"></div>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Position</div><div class="v" id="race-pos">—</div></div>
+      <div class="tile"><div class="k">Race left</div><div class="v" id="race-left">—</div></div>
+      <div class="tile"><div class="k">Stint</div><div class="v" id="race-stint">—</div></div>
+      <div class="tile"><div class="k">In-game</div><div class="v" id="race-ig">—</div></div>
+    </div>
+
+    <div class="quick">
+      <button class="qbtn" data-v2act="log" data-type="pit-in">Pit In</button>
+      <button class="qbtn" data-v2act="log" data-type="pit-out">Pit Out</button>
+      <button class="qbtn danger" data-v2act="log" data-type="contact">Contact</button>
+    </div>
+
+    <div class="feed" id="race-feed"></div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="v2-screen" id="screen-plan">
+    <div class="sect-title">Stint Schedule</div>
+    <div id="plan-list" class="plan-list"></div>
+    <div class="sect-title">Fuel</div>
+    <div class="panel">
+      <div class="frow">
+        <label>Fuel now (L)<input type="number" inputmode="decimal" id="v2-fc-fuel" data-v2act="fuel"></label>
+        <label>Burn / lap (L)<input type="number" inputmode="decimal" id="v2-fc-burn" data-v2act="fuel"></label>
+        <label>Lap time<input inputmode="decimal" id="v2-fc-lap" placeholder="2:18.5" data-v2act="fuel"></label>
+      </div>
+      <div id="v2-fc-out" class="fuel-out">Enter all three.</div>
+    </div>
+  </section>
+
+  <!-- ============ TEAM ============ -->
+  <section class="v2-screen" id="screen-team">
+    <div class="sect-title">Drivers</div>
+    <div id="team-drivers" class="drv-list"></div>
+    <div class="sect-title">Event</div>
+    <div class="panel">
+      <div class="frow">
+        <label>Event<input id="v2-name" data-v2act="cfg" data-k="name"></label>
+        <label>Track<input id="v2-track" data-v2act="cfg" data-k="track"></label>
+        <label>Car<input id="v2-car" data-v2act="cfg" data-k="car"></label>
+      </div>
+      <div class="frow">
+        <label>Date (GMT)<input type="date" id="v2-date" data-v2act="cfg" data-k="date"></label>
+        <label>Start hour (GMT)<input type="number" inputmode="numeric" min="0" max="23" id="v2-hour" data-v2act="cfg" data-k="hour"></label>
+        <label>Hours<input type="number" inputmode="decimal" id="v2-dur" data-v2act="cfg" data-k="dur"></label>
+      </div>
+      <button class="wide" data-v2act="build">Build schedule</button>
+    </div>
+    <div class="sect-title">Checklists</div>
+    <div id="team-checks" class="checks"></div>
+    <div class="sect-title">This device</div>
+    <div class="panel">
+      <div id="v2-sync-state" class="sync-state"></div>
+      <button class="wide" data-v2="team-setup">Team sync settings</button>
+      <button class="wide ghost" data-v2act="demo">Load sample event</button>
+      <div class="build-stamp">v2 · build <span id="v2-build">—</span></div>
+    </div>
+  </section>
+
+</main>
+
+<nav id="v2-nav">
+  <button class="on" data-v2="race"><span>Race</span></button>
+  <button data-v2="plan"><span>Plan</span></button>
+  <button data-v2="team"><span>Team</span></button>
+</nav>
+
+<!-- Sheets -->
+<div class="sheet" id="sheet-entries"><div class="sheet-inner">
+  <div class="sheet-title">Your Cars</div>
+  <div id="v2-entries"></div>
+  <div class="sheet-foot">
+    <button data-v2act="entry-new">Add car</button>
+    <button class="ghost" data-v2="close">Close</button>
+  </div>
+</div></div>
+
+<div class="sheet" id="sheet-team"><div class="sheet-inner">
+  <div class="sheet-title">Team Sync</div>
+  <div id="v2-team-body"></div>
+  <div class="sheet-foot"><button class="ghost" data-v2="close">Close</button></div>
+</div></div>
+
+<div class="sheet" id="sheet-stint"><div class="sheet-inner">
+  <div class="sheet-title">Stint <span id="v2-stint-num"></span></div>
+  <div class="frow">
+    <label>Driver<select id="v2-stint-driver"></select></label>
+    <label>Actual end (GMT)<input id="v2-stint-end" inputmode="numeric" placeholder="15:02"></label>
+  </div>
+  <div class="frow">
+    <label>Actual laps<input type="number" inputmode="numeric" id="v2-stint-laps"></label>
+    <label>Position<input id="v2-stint-pos" inputmode="numeric"></label>
+  </div>
+  <label>Notes<textarea id="v2-stint-notes" rows="3"></textarea></label>
+  <div class="sheet-foot">
+    <button data-v2act="stint-save">Save</button>
+    <button data-v2act="stint-done">Mark done</button>
+    <button class="ghost" data-v2="close">Close</button>
+  </div>
+</div></div>
+
+<!-- Engine, shared with v1. These files render into v1's markup, which is not
+     present here, so their render functions no-op harmlessly; v2 supplies its
+     own. main.js is deliberately NOT loaded: it is v1's boot sequence. -->
+<script src="../js/data.js"></script>
+<script src="../js/state.js"></script>
+<script src="../js/catalog.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/schedule.js"></script>
+<script src="../js/dashboard.js"></script>
+<script src="../js/strategy.js"></script>
+<script src="../js/drivers.js"></script>
+<script src="../js/goals.js"></script>
+<script src="../js/optimizer.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/sync.js"></script>
+<script src="../js/collapse.js"></script>
+<script src="../js/entries.js"></script>
+<script src="../js/demo.js"></script>
+<script src="../js/live.js"></script>
+<script src="v2.js"></script>
+</body>
+</html>

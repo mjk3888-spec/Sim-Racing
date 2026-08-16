@@ -92,6 +92,11 @@ function getAv(stint,name){const di=S.drivers.findIndex(d=>d.name===name);if(di<
 // AVAIL
 function buildAvail(){
   refreshAvDrvSelect();const wrap=el('avwrap');const start=raceStart();
+  /* Every other render function in this file guards on a missing element; this
+     one did not, and threw as soon as the availability grid was absent. That
+     matters now the v2 shell reuses this engine with different markup, and it
+     was always a latent crash for any page that did not include #avwrap. */
+  if(!wrap)return;
   if(!start||!S.config.dur){wrap.innerHTML='<div style="padding:20px;color:var(--muted);font-size:0.68rem">Build schedule first.</div>';return;}
   const raceEnd=start.getTime()+parseFloat(S.config.dur)*3600000;
   const slots=[];let t=start.getTime();while(t<raceEnd){slots.push(t);t+=1800000;}
