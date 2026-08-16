@@ -11,15 +11,16 @@
     "Build stamp moved: RE-BASELINED, tab_config only. The stamp was briefly a large floating overlay, which was the wrong call for something checked a few times a year. It now sits at the foot of the Config tab and the corner mark went back to quiet decoration.",
     "Live Sync card added: RE-BASELINED, tab_config only. The app is now wired to the Cloudflare backend; the old Google Sheet card is retained below it, labelled as retiring.",
     "Multi-car entries + readability: RE-BASELINED. tab_config shrank (retired Google Sheet card deleted), strip grew (event name became the entry switcher), modals 7 to 8 (car list added). tab_ops, tab_schedule, tab_avail, tab_goals and the stint digest are UNCHANGED, which is the proof that adding entries did not disturb the single-entry rendering path.",
-    "Phone layout pass: RE-BASELINED. modals grew (Position and Repair Time added to the stint note popup, because the phone table hides those columns). tab_config hash moved at IDENTICAL length, which is just the build stamp string. Everything else unchanged: the column hiding and the config overflow fix are CSS only and change no markup."
+    "Phone layout pass: RE-BASELINED. modals grew (Position and Repair Time added to the stint note popup, because the phone table hides those columns). tab_config hash moved at IDENTICAL length, which is just the build stamp string. Everything else unchanged: the column hiding and the config overflow fix are CSS only and change no markup.",
+    "Redesign, phase 1: RE-BASELINED. tab_schedule grew by 70 chars (data-l labels on five cells so the phone card layout can render column names); tab_config moved by the build stamp plus the reworked prerequisites button. Everything else unchanged: the card layout, type scale and colour changes are CSS only."
   ],
 
   "stintCount": 5,
   "digest": "1|Tom Becker|std-tires|32|103.4|4444800|;2|Michael Kelly|std-tires|32|103.4|4444800|;3|Ana Silva|std-tires|32|103.4|4444800|;4|Yuki Sato|fs|32|103.4|4444800|;5|-|std-tires|25|80.8|3540800|F",
   "digestHash": "750abebd:189",
   "tab_ops": "7c72ff86:13754",
-  "tab_config": "e96b46e8:28613",
-  "tab_schedule": "1eea408a:16014",
+  "tab_config": "c4f54872:28649",
+  "tab_schedule": "f0bb8dc5:16084",
   "tab_avail": "440346e9:27562",
   "tab_fuel": "c0a5fdf9:5131",
   "tab_goals": "416284ef:2365",

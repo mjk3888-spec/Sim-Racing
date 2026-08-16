@@ -53,8 +53,8 @@ function renderSchedule(){
     const pc=s.position&&ppn?(cpn<ppn?'var(--green)':cpn>ppn?'var(--red)':'var(--text)'):'var(--text)';
     return`<tr class="${s.done?'done ':''+(live?'live-row ':'')}${arc}" style="${isPR?'background:rgba(223,255,0,0.008);box-shadow:inset 2px 0 0 rgba(223,255,0,0.2)':''}">
       <td style="color:${isPR?'var(--volt)':'var(--muted)'}">${s.num}${s.isFinal?' ✦':''}</td>
-      <td>${status}</td>
-      <td style="min-width:155px"><div style="display:flex;flex-direction:column;gap:3px">
+      <td data-l="Status">${status}</td>
+      <td data-l="Driver" style="min-width:155px"><div style="display:flex;flex-direction:column;gap:3px">
         <div style="font-family:var(--display);font-size:0.65rem;font-weight:700;color:var(--text)">${dd}</div>
         <select style="border-left:3px solid ${dc};padding-left:7px;font-size:0.72rem;background:var(--bg);color:var(--muted);border-top:none;border-right:none;border-bottom:none;border-style:solid;border-width:0 0 0 3px;outline:none;cursor:pointer" data-action="stint.assign-driver" data-i="${i}">${dOpts}</select>
       </div></td>
@@ -64,8 +64,8 @@ function renderSchedule(){
         <option value="std-tires"${s.stintType==='std-tires'?' selected':''}>Std+Tires</option>
         <option value="fs-tires"${s.stintType==='fs-tires'?' selected':''}>FS+Tires</option>
       </select></td>
-      <td style="font-size:0.8rem;color:${live?'var(--volt)':'var(--text)'}">${fmtGMT(new Date(s.startMs))}</td>
-      <td style="font-size:0.8rem;color:var(--text)">${fmtGMT(new Date(s.endMs))}</td>
+      <td data-l="Start" style="color:${live?'var(--volt)':'var(--text)'}">${fmtGMT(new Date(s.startMs))}</td>
+      <td data-l="End">${fmtGMT(new Date(s.endMs))}</td>
       <td style="font-size:0.8rem;color:${drv?'var(--text)':'var(--muted)'}">${mkT(lsr)}</td>
       <td style="font-size:0.8rem;color:${drv?'var(--text)':'var(--muted)'}">${mkT(ler)}</td>
       <td style="font-size:0.8rem">${fmtDur(s.durMs)}</td>
@@ -75,7 +75,7 @@ function renderSchedule(){
       <td><input type="text" value="${s.actualLaps||''}" style="width:48px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:0.78rem;padding:3px 5px;text-align:center" data-action="stint.actual-laps" data-i="${i}"></td>
       <td><input type="text" value="${s.position||''}" style="width:48px;background:var(--bg);border:1px solid var(--border);color:${pc};font-size:0.78rem;padding:3px 5px;text-align:center;font-weight:700" data-action="stint.position" data-i="${i}"></td>
       <td style="white-space:nowrap">${dmg}</td>
-      <td><button class="btn xs" data-action="stint.note" data-i="${i}">✎</button></td>
+      <td data-l="Edit"><button class="btn xs" data-action="stint.note" data-i="${i}">✎</button></td>
     </tr>`;
   }).join('');
 }

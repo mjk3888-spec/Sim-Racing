@@ -131,37 +131,85 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
 #strip{padding-top:env(safe-area-inset-top,0px);}
 body{padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}
 
-/* ===================== PHONE: STINT TABLE ==========================
-   Sixteen columns cannot be read on a phone, and cramming them in is the wrong
-   answer. Michael's own call on what he looks at mid-stint: who is in the car
-   and when they get out. So the phone shows #, Status, Driver, Start, End and
-   the edit pencil, and EVERYTHING ELSE MOVES INTO THE EDIT POPUP rather than
-   disappearing. Hiding data he still has to type would be worse than scrolling.
-   Columns: 1 # · 2 Status · 3 Driver · 4 Type · 5 GMT Start · 6 GMT End
-            7 Local Start · 8 Local End · 9 Duration · 10 Laps · 11 Fuel
-            12 Actual End · 13 Act Laps · 14 Pos · 15 Damage · 16 Notes  */
-@media(max-width:768px){
-  #stint-table th:nth-child(4),  #stint-table td:nth-child(4),
-  #stint-table th:nth-child(7),  #stint-table td:nth-child(7),
-  #stint-table th:nth-child(8),  #stint-table td:nth-child(8),
-  #stint-table th:nth-child(9),  #stint-table td:nth-child(9),
-  #stint-table th:nth-child(10), #stint-table td:nth-child(10),
-  #stint-table th:nth-child(11), #stint-table td:nth-child(11),
-  #stint-table th:nth-child(12), #stint-table td:nth-child(12),
-  #stint-table th:nth-child(13), #stint-table td:nth-child(13),
-  #stint-table th:nth-child(14), #stint-table td:nth-child(14),
-  #stint-table th:nth-child(15), #stint-table td:nth-child(15){display:none;}
-  #stint-table{width:100%;}
-  #stint-table td,#stint-table th{padding:7px 6px;}
 
-  /* Config stacks instead of scrolling sideways. Two things were needed:
-     the 600px floor (which existed to hold two columns a phone has no room
-     for), and min-width:0 on the grid children. Grid and flex items default to
-     min-width:auto, which means they refuse to shrink below their content, so
-     the settings table's 760px minimum was forcing the whole column wide and
-     defeating its own scroll container. This is the usual cause of a stubborn
-     sideways scroll and it is not obvious from looking at the markup. */
-  #page-config .g2{min-width:0!important;}
-  #page-config .g2>*, #page-config .g2>*>*{min-width:0;}
-  .twrap{max-width:100%;}
+/* ============================================================================
+   PHONE: THE STINT SCHEDULE STOPS BEING A TABLE
+   ----------------------------------------------------------------------------
+   Sixteen columns cannot be made to work on a 430px screen. Hiding columns was
+   tried and still left a 760px table scrolling sideways, because .twrap table
+   carries min-width:760px and hiding cells does not remove a min-width.
+
+   So on a phone each stint becomes a CARD instead. No horizontal scrolling at
+   all, no header row to lose while scrolling, and the wasted space collapses.
+   Michael's call on what he reads mid-stint: who is in the car and when they
+   get out. That is what the card shows. Everything else stays reachable
+   through the edit pencil, which opens the popup carrying position, repair
+   time, actual laps and notes.
+
+   Pure CSS over the existing table markup; renderSchedule() only had to gain
+   data-l labels. The desktop table is untouched.
+   ========================================================================== */
+@media(max-width:768px){
+  #stint-table{min-width:0!important;width:100%!important;display:block;border-collapse:separate;}
+  #stint-table thead{display:none;}
+  #stint-table tbody{display:block;width:100%;}
+
+  #stint-table tbody tr{
+    display:grid;
+    grid-template-columns:auto 1fr 1fr auto;
+    grid-template-areas:"num driver driver edit" "num start end edit";
+    align-items:center;
+    gap:var(--sp-1) var(--sp-3);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-left:3px solid var(--border-bright);
+    border-radius:var(--radius);
+    padding:var(--sp-3);
+    margin-bottom:var(--sp-2);
+    box-shadow:none!important;
+  }
+  #stint-table tbody tr.live-row{border-left-color:var(--volt);background:rgba(223,255,0,0.05);}
+  #stint-table tbody tr.done{border-left-color:var(--muted-dim);opacity:0.72;}
+  #stint-table tbody tr.avail-blocked{border-left-color:var(--red);}
+  #stint-table tbody tr.avail-maybe{border-left-color:var(--yellow);}
+
+  /* Only these five cells survive on a phone; the rest move to the popup. */
+  #stint-table tbody td{display:none;border:none!important;padding:0!important;background:none!important;}
+  #stint-table tbody td:nth-child(1),
+  #stint-table tbody td:nth-child(2),
+  #stint-table tbody td:nth-child(3),
+  #stint-table tbody td:nth-child(5),
+  #stint-table tbody td:nth-child(6),
+  #stint-table tbody td:nth-child(16){display:block;}
+
+  /* Stint number: the big anchor down the left. */
+  #stint-table tbody td:nth-child(1){
+    grid-area:num;position:static!important;
+    font-family:var(--display);font-size:var(--fs-xl);font-weight:800;
+    color:var(--muted)!important;min-width:2.2em;text-align:center;line-height:1;
+  }
+  #stint-table tbody tr.live-row td:nth-child(1){color:var(--volt)!important;}
+
+  #stint-table tbody td:nth-child(2){grid-area:driver;justify-self:end;align-self:start;}
+  #stint-table tbody td:nth-child(3){grid-area:driver;min-width:0!important;}
+  #stint-table tbody td:nth-child(16){grid-area:edit;}
+
+  /* Start and End get their own grid columns rather than being stacked into
+     one area and pulled apart with negative margins, which drifts the moment a
+     font or label length changes. */
+  #stint-table tbody td:nth-child(5){grid-area:start;}
+  #stint-table tbody td:nth-child(6){grid-area:end;}
+  #stint-table tbody td:nth-child(5),
+  #stint-table tbody td:nth-child(6){font-family:var(--mono);font-size:var(--fs-md);justify-self:start;}
+  #stint-table tbody td[data-l]::before{
+    content:attr(data-l) " ";
+    font-family:var(--display);font-size:var(--fs-xs);letter-spacing:0.14em;
+    color:var(--muted);margin-right:var(--sp-1);
+  }
+  #stint-table tbody td:nth-child(2)::before,
+  #stint-table tbody td:nth-child(3)::before,
+  #stint-table tbody td:nth-child(16)::before{content:none;}
+
+  /* The driver select is the main control on this card, so give it room. */
+  #stint-table tbody td:nth-child(3) select{width:100%;margin-top:var(--sp-1);}
 }
