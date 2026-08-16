@@ -10,32 +10,41 @@ Sync backend: https://luminary-sync.mjk3888.workers.dev
 
 ---
 
-## Right now (2026-08-16, build 2026-08-16.1)
+## Right now (2026-08-16, build 2026-08-16.2)
 
 Everything below is committed, pushed and live. Nothing is half-finished.
 
-**Just landed:** live sync. Phone and PC share one event through a Cloudflare
-Durable Object. **Awaiting Michael's real two-device test on an iPhone.** If he
-reports a problem, get him to check the build number at the foot of the Config
-tab FIRST: an installed PWA serves the previous version on the first load after
-a deploy and needs opening twice. That has already caused two false bug reports.
+**Live sync works and has been confirmed on Michael's real iPhone and PC**,
+both directions, on the deployed site. Not just in tests.
+
+**Just landed and NOT yet confirmed by him on a phone:** the corrected type
+scale, the nav bar wrapping to two rows, multiple cars with the switcher, and
+the removal of the old Google Sheet sync.
+
+**If he reports a problem, check the build number at the foot of the Config tab
+FIRST.** An installed PWA serves the previous version on the first load after a
+deploy and needs opening twice. That has already caused two false bug reports.
 
 **Nothing on the phone or PC is precious.** Michael has confirmed there is no
 event data worth preserving, so migrations and destructive tests are safe. Ask
 again before assuming that still holds.
 
+**One open question:** my screenshot tool renders the entries overlay at
+roughly 45% scale while the DOM measures it correctly (overlay 430x932, modal
+398x900 in a 430x932 viewport). Measured twice. Treated as a capture artifact,
+not a layout bug, but if Michael says the car list looks wrong on his phone,
+believe him over the measurement and start there.
+
 **Next, in his stated priority order:**
 
-1. Readability. Measured, not started. See the Verification standard notes: the
-   whole type ramp renders at roughly 40% of intended size because `rem`
-   resolves against the 16px default. `html{font-size:21px}` is the one-line
-   lever and is tested safe; 23px starts breaking layouts. Two follow-ups
-   needed: the header event name truncates and the nav bar overflows further.
-2. Phase 2, real multi-car entries. Paths are already namespaced `e/<id>/...`
-   so this is additive.
-3. Phase 4, home screen and entry switcher, with the mobile redesign folded in.
-   Do not redesign before this exists or it gets done twice.
-4. Step 6, ES modules. Unblocked but lowest value to him.
+1. Confirm the above on a real phone.
+2. The remaining readability work: Config, Schedule and Availability still need
+   sideways scrolling. Decide WITH him which stint columns matter on a phone
+   rather than cramming all 16 in.
+3. Race Lock and a proper offline queue (Phase 5).
+4. Team-level driver library: `lum_drivers` is still per-device and should move
+   to team level now that entries exist.
+5. Step 6, ES modules. Unblocked but lowest value to him.
 
 **A caution learned the hard way this session:** every automated test here runs
 in Chromium on Windows. That is not an iPhone. A car picker built with
