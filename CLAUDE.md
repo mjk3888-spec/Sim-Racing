@@ -67,7 +67,9 @@ js/                 16 classic scripts                      (ORDER MATTERS)
 sw.js               service worker
 assets/logo.svg     4.8 KB vector logo
 wrangler.toml       for a future Cloudflare Workers deploy, not yet used
+worker/index.js     sync backend: Worker + TeamRoom Durable Object (Phase 1)
 tools/              verification harness, see Verification standard below
+  sync-test.js      12 correctness tests over a real WebSocket
   serve.ps1         static localhost server, .NET only, no node needed
   harness.js        deterministic seed + per-tab markup hashing
   functional.js     44 real-DOM-event tests over the delegated wiring
@@ -204,10 +206,37 @@ needs its own.
 
 ## What is next
 
-**Step 6. Convert to ES modules.** Now unblocked. The markup no longer names any
-function, but `js/actions.js` still resolves 66 of them from global scope, so
-that file is the one that has to change shape. Re-run the Verification standard
-against `tools/baseline.json` afterwards: the rendered markup must still match.
+**Phase 1 of the sync work is DONE and deployed.** See Deployment below. The
+backend exists and is proven correct; the app is not yet wired to it, so nothing
+in the UI has changed. Protocol:
+
+```
+client -> {type:'patch', path, value, ts, clientId}   {type:'get'}  {type:'ping'}
+server -> {type:'snapshot', state}   {type:'patch', ...}   {type:'ack'}
+          {type:'rejected', path, value, ts}   {type:'presence', peers}
+```
+
+Conflicts resolve **last write wins per FIELD**, and a stale write is rejected
+rather than applied, with the winning value returned to the sender. That is the
+property the Apps Script backend lacks and the reason it is not safe to patch:
+it writes whole state, so a device holding old data overwrites everything.
+
+**Phase 2. Reshape state into Team / Entry / Person.** Migrate the existing
+`lum4` localStorage into a single entry on first launch so nothing is lost.
+`lum_drivers` is cross-event and moves to team level.
+
+**Phase 3. Wire the app to the live pipe.** Only after 2.
+
+**Phase 4. Home screen, entry switcher, and the mobile redesign together.**
+Do NOT redesign before this: the home screen and switcher change navigation, so
+designing the six tabs first means designing twice.
+
+**Phase 5. Race Lock and the offline queue.**
+
+**Step 6, ES modules,** is unblocked but deferred behind the sync work, which is
+what actually blocks how Michael races. The markup no longer names any function,
+but `js/actions.js` still resolves 66 of them from global scope, so that file is
+the one that has to change shape.
 
 **Steps 7 to 9 ship together. This is the big one.**
 
@@ -256,12 +285,34 @@ driver library (`lum_drivers`) is cross-event and moves to team level.
 it redeploys in about a minute. Keep this running as a fallback even after
 Cloudflare.
 
-**Cloudflare is deferred to Step 8** and will deploy with `wrangler` from a
-command line. The dashboard's Git integration wizard was abandoned after
-repeated failures and is not worth revisiting. `wrangler.toml` is committed and
-ready. Free tier limits confirmed as ample: Workers and Durable Objects 100k
+**Cloudflare sync backend is DEPLOYED and live** as of Phase 1:
+
+```
+https://luminary-sync.mjk3888.workers.dev
+  /health            service check
+  /team/new          issues a random 160-bit team key
+  /team/<key>/ws     WebSocket
+  /team/<key>/state  read-only snapshot, for debugging
+```
+
+Account `988a58379850d03d24f1b0333c4f6a7e`. Deploy with `npx wrangler deploy`
+from the repo root. `node_modules/` is gitignored, so run `npm install` first on
+a fresh clone. The dashboard's Git integration wizard was abandoned after
+repeated failures and is not worth revisiting.
+
+**The app is NOT served from Cloudflare and should not be.** It stays on GitHub
+Pages. `wrangler.toml` deliberately has no `[assets]` block: a Cloudflare
+problem should be able to break syncing, never take the app offline.
+
+Free tier limits confirmed as ample: Workers and Durable Objects 100k
 requests/day, DO duration 13,000 GB-s/day. A six-hour race with six drivers is
-roughly 2,700 GB-s.
+roughly 2,700 GB-s, and the Hibernation API means idle connections between
+stints accrue no duration at all.
+
+**A 500 immediately after the first `wrangler deploy` is normal.** The Durable
+Object migration takes a moment to propagate. It resolved on retry with no code
+change; `wrangler tail` showed the request had actually returned 200 with no
+exceptions. Do not go chasing a bug there.
 
 The default branch is `claude/luminary-pwa-conversion-uhm617`, not `main`.
 Renaming it is fine and overdue.
