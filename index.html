@@ -321,6 +321,10 @@
           <span id="sync-status2" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted)">Offline</span>
         </div>
       </div>
+      <!-- Build number lives here, not floating over the app. This is the answer
+           to "is this device on the current version or a stale cache?", which is
+           something you check deliberately, not something you stare at. -->
+      <div style="font-family:var(--mono);font-size:0.66rem;color:var(--text-mid);text-align:center;padding:14px 0 4px;text-transform:none">App build <span id="build-stamp">—</span></div>
     </div>
   </div>
 </div>
@@ -514,7 +518,7 @@
 </div>
 
 </div><!-- /main -->
-<div class="l08">L08 · V5 · build <span id="build-stamp">—</span></div>
+<div class="l08">L08 · V5</div>
 
 <!-- MODALS -->
 <div class="overlay" id="drv-overlay"><div class="modal">

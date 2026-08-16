@@ -7,14 +7,15 @@
     "v5-pre-delegation (04a66b3): first capture, before Step 5.",
     "Step 5 (b6b8b3e): inline handlers replaced with delegation. All hashes MATCHED, which was the point: a pure refactor must not change rendered output.",
     "Sample event + pick lists + keypads: RE-BASELINED. Four hashes moved on purpose. tab_config gained the car/track datalists and the Load Sample Event button; tab_fuel, modals and tab_schedule gained inputmode attributes (tab_schedule by exactly 20 chars, one inputmode=numeric). tab_ops, tab_avail, tab_goals, strip and the stint digest were untouched and must stay untouched.",
-    "Pickers rebuilt as <select>: RE-BASELINED, tab_config only. datalist gives iOS Safari no dropdown at all, so Car Class / Car / Track became real selects with an Other escape hatch, and the car list now narrows to the chosen class. Everything else unchanged, which is the expected shape of a change confined to one card on one tab."
+    "Pickers rebuilt as <select>: RE-BASELINED, tab_config only. datalist gives iOS Safari no dropdown at all, so Car Class / Car / Track became real selects with an Other escape hatch, and the car list now narrows to the chosen class. Everything else unchanged, which is the expected shape of a change confined to one card on one tab.",
+    "Build stamp moved: RE-BASELINED, tab_config only. The stamp was briefly a large floating overlay, which was the wrong call for something checked a few times a year. It now sits at the foot of the Config tab and the corner mark went back to quiet decoration."
   ],
 
   "stintCount": 5,
   "digest": "1|Tom Becker|std-tires|32|103.4|4444800|;2|Michael Kelly|std-tires|32|103.4|4444800|;3|Ana Silva|std-tires|32|103.4|4444800|;4|Yuki Sato|fs|32|103.4|4444800|;5|-|std-tires|25|80.8|3540800|F",
   "digestHash": "750abebd:189",
   "tab_ops": "7c72ff86:13754",
-  "tab_config": "ffe64030:28584",
+  "tab_config": "b8d98bab:28990",
   "tab_schedule": "1eea408a:16014",
   "tab_avail": "440346e9:27562",
   "tab_fuel": "c0a5fdf9:5131",
