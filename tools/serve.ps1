@@ -29,6 +29,30 @@ while ($listener.IsListening) {
     $rel = [System.Uri]::UnescapeDataString($req.Url.AbsolutePath).TrimStart('/')
     if ($rel -eq '') { $rel = 'index.html' }
 
+    # POST /__save/<name> writes a base64 body to tools/out/. Used to generate
+    # icon PNGs from the logo SVG in a real browser canvas, which avoids adding
+    # an image-processing dependency just to resize a logo.
+    if ($rel.StartsWith('__save/') -and $req.HttpMethod -eq 'POST') {
+      $name = [System.IO.Path]::GetFileName($rel.Substring(7))
+      $reader = New-Object System.IO.StreamReader($req.InputStream)
+      $b64 = $reader.ReadToEnd()
+      $reader.Close()
+      $outDir = Join-Path $PSScriptRoot 'out'
+      if (-not (Test-Path $outDir)) { New-Item -ItemType Directory $outDir | Out-Null }
+      [System.IO.File]::WriteAllBytes((Join-Path $outDir $name), [System.Convert]::FromBase64String($b64))
+      $res.AddHeader('Access-Control-Allow-Origin','*')
+      $res.StatusCode = 200
+      $ok = [System.Text.Encoding]::UTF8.GetBytes('saved ' + $name)
+      $res.OutputStream.Write($ok, 0, $ok.Length)
+      $res.Close()
+      continue
+    }
+    if ($req.HttpMethod -eq 'OPTIONS') {
+      $res.AddHeader('Access-Control-Allow-Origin','*')
+      $res.AddHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS')
+      $res.StatusCode = 200; $res.Close(); continue
+    }
+
     if ($rel -eq '__quit') {
       $res.StatusCode = 200
       $res.Close()

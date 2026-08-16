@@ -487,6 +487,38 @@ window.LUMTEST = (function () {
         const px = parseFloat(getComputedStyle(document.documentElement).fontSize);
         return px >= 20 || 'root font-size is ' + px + 'px';
       });
+      check('NOTHING escapes the screen width on any tab', () => {
+        // This replaces an earlier check that compared each page's scrollWidth to
+        // its own clientWidth. That can never fail, because the page stretches
+        // with its content, and it let a 762px-wide Config tab pass twice while
+        // Michael was actually having to scroll sideways on his phone.
+        // The honest test: measure against the VIEWPORT, and ignore elements
+        // that are legitimately inside a horizontal scroller (a wide table
+        // scrolling within its own card is correct).
+        const vw = window.innerWidth;
+        if (vw > 900) return true;   // only meaningful at phone/tablet widths
+        const inScroller = n => {
+          let p = n.parentElement;
+          while (p && p !== document.body) {
+            const ox = getComputedStyle(p).overflowX;
+            if (ox === 'auto' || ox === 'scroll') return true;
+            p = p.parentElement;
+          }
+          return false;
+        };
+        const bad = [];
+        ['ops', 'config', 'schedule', 'avail', 'fuel', 'goals'].forEach(p => {
+          pg(p);
+          const e = document.getElementById('page-' + p);
+          [...e.querySelectorAll('*')].forEach(n => {
+            if (n.getBoundingClientRect().width > vw + 2 && !inScroller(n)) {
+              bad.push(p + ':' + n.tagName.toLowerCase() + '=' + Math.round(n.getBoundingClientRect().width));
+            }
+          });
+        });
+        pg('ops');
+        return bad.length === 0 || bad.length + ' element(s) wider than the screen, e.g. ' + bad.slice(0, 3).join(', ');
+      });
       check('the retired Google Sheet sync card is gone', () => {
         return (!$('#sync-url-input') && !$('#sync-dot2')) || 'old sync card still present';
       });

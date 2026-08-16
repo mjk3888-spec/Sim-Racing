@@ -213,3 +213,30 @@ body{padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-i
   /* The driver select is the main control on this card, so give it room. */
   #stint-table tbody td:nth-child(3) select{width:100%;margin-top:var(--sp-1);}
 }
+
+/* ============================================================================
+   CONFIG: STOP THE SIDEWAYS SCROLL FOR REAL
+   ----------------------------------------------------------------------------
+   Reported twice, and twice I claimed it fixed. Both my earlier attempts and my
+   earlier VERIFICATION were wrong. The check compared each page's scrollWidth to
+   its own clientWidth, which can never fail when the page itself stretches with
+   its content. Measuring against the actual viewport instead found 148 elements
+   wider than the screen on this tab.
+
+   Cause: grid and flex children default to min-width:auto and refuse to shrink
+   below their content. I had applied min-width:0 two levels deep, but .twrap
+   (which holds the 760px settings table) sits three levels down, so the table's
+   minimum still propagated all the way out.
+
+   Fix: constrain the whole chain, and let the settings table scroll inside its
+   OWN wrapper, which is the correct place for a wide table to scroll.
+   ========================================================================== */
+@media(max-width:768px){
+  #page-config>div[style*="overflow-x"]{overflow-x:hidden!important;max-width:100%;}
+  #page-config .g2, #page-config .g2>*, #page-config .card{min-width:0!important;max-width:100%;}
+  #page-config .twrap{min-width:0!important;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* Time pickers: the h/m labels were being pushed past the edge. */
+  .time-pair{min-width:0;max-width:100%;flex-wrap:nowrap;}
+  .time-pair select{min-width:0;flex:1 1 0;}
+  .time-pair .tsep{flex:0 0 auto;}
+}
