@@ -45,6 +45,15 @@
 <link rel="stylesheet" href="styles/pages.css">
 </head>
 <body>
+<!-- Boot splash. The iOS startup image is shown by Safari only while the page
+     is loading and its duration cannot be set; this app loads fast, so that
+     native splash flashes past. This overlay is the part we control: it paints
+     immediately (it is in the markup, not created by script), holds, then fades.
+     pointer-events:none throughout, so it can never swallow a tap even if a
+     script error stopped it being removed. -->
+<div id="boot-splash">
+  <img src="assets/logo.svg" alt="" width="1254" height="1254">
+</div>
 <div id="strip">
   <div class="strip-scroll">
     <div class="s-brand">

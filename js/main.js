@@ -25,4 +25,13 @@ initDelegation();loadState();liveInit();
    the clocks and countdowns are what he opens the app for, and being dropped
    on Config because that is where he left it costs a tap when it matters. */
 pg('ops');
+/* Hold the branded splash a beat, then fade it out. Safari decides how long the
+   native iOS startup image shows and it cannot be configured; this overlay can.
+   Removed from the DOM afterwards so it leaves nothing behind. */
+setTimeout(function(){
+  var b=el('boot-splash');
+  if(!b)return;
+  b.classList.add('gone');
+  setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},500);
+},1100);
 setInterval(updateDash,5000);
