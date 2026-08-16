@@ -43,9 +43,35 @@ window.LUMTEST = (function () {
         click(document.querySelectorAll('#nav .tab')[4]);   // Pit Strategy
         return $('#page-fuel').classList.contains('on') || 'page-fuel not active';
       });
-      check('nav: strip live-sync block opens config', () => {
-        click($('#strip [data-action="nav"][data-page="config"]'));
-        return $('#page-config').classList.contains('on') || 'page-config not active';
+      // The header sync block used to navigate to the Config tab, where sync
+      // setup lived at the very bottom of the page. Sync is a critical function
+      // and was too buried, so that block now opens the team dialog directly
+      // from whatever tab you are on.
+      check('header sync block opens the team dialog from any tab', () => {
+        pg('goals');
+        click($('#strip [data-action="team.open"]'));
+        const open = $('#team-overlay').classList.contains('on');
+        click($('[data-action="team.close"]'));
+        return open || 'team dialog did not open from the header';
+      });
+      check('team dialog shows ONE state at a time, never all four buttons', () => {
+        // The reported problem was four buttons at once with no indication of
+        // which to press. Disconnected and connected states must be exclusive.
+        click($('#strip [data-action="team.open"]'));
+        const dis = getComputedStyle($('#team-setup-disconnected')).display !== 'none';
+        const con = getComputedStyle($('#team-setup-connected')).display !== 'none';
+        click($('[data-action="team.close"]'));
+        return (dis !== con) || `both states visible (disconnected=${dis} connected=${con})`;
+      });
+      check('a team key typed the human way is normalised, not rejected', () => {
+        // Michael typed "WTR DAYTONA 2026". Spaces are not valid on the server,
+        // so it failed the handshake and retried forever showing "socket error".
+        if (normalizeTeamKey('WTR DAYTONA 2026') !== 'wtr-daytona-2026') {
+          return 'got ' + normalizeTeamKey('WTR DAYTONA 2026');
+        }
+        if (teamKeyProblem(normalizeTeamKey('WTR Daytona 2026')) !== '') return 'valid key was rejected';
+        if (!teamKeyProblem(normalizeTeamKey('wtr'))) return 'a 3-character key was accepted';
+        return true;
       });
 
       // ---- SCHEDULE: the change/focusout/keydown paths ---------------------

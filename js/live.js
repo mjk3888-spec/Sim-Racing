@@ -284,8 +284,14 @@ function liveApplySnapshot(state) {
 
 function liveConnect() {
   const inp = el('live-key-input');
-  const key = ((inp ? inp.value : LIVE_KEY) || '').trim().toLowerCase();
-  if (!key) { alert('Enter a team key, or tap New Team.'); return; }
+  // Normalise rather than reject: "WTR Daytona 2026" becomes
+  // "wtr-daytona-2026", which is what the person meant. Before this, a typed
+  // key with spaces failed the server's format check, the handshake failed,
+  // and the client retried forever showing only "socket error".
+  const key = normalizeTeamKey(inp ? inp.value : LIVE_KEY);
+  const problem = teamKeyProblem(key);
+  if (problem) { alert(problem); return; }
+  if (inp) inp.value = key;
 
   // Joining a team that already has an event will pull that event onto this
   // device. Say so before doing it rather than after.
@@ -450,6 +456,8 @@ function liveRenderJoinBanner() {
 function liveRenderPanel() {
   liveRenderJoinBanner();
   renderTeamIdentity();
+  try{ if(el('team-overlay').classList.contains('on')) renderTeamPanel(); }catch(e){}
+  renderSyncSummary();
   const inp = el('live-key-input');
   if (inp && LIVE_KEY && inp.value.trim().toLowerCase() !== LIVE_KEY) inp.value = LIVE_KEY;
   const disp = el('live-key-disp');
@@ -588,4 +596,76 @@ function liveKeyWarning() {
       ? 'Short keys are easy to guess. Anyone who guesses it can edit your race.'
       : 'That is an easy key to guess. Anyone who guesses it can edit your race.';
   }
+}
+
+/* ---------- key handling ---------- */
+
+/* People type "WTR Daytona 2026". The server only accepts [a-z0-9-]{8,64}, so
+   an unnormalised key produced a handshake failure and an endless reconnect
+   loop with nothing but "socket error" to show for it. Normalise instead of
+   rejecting: spaces and punctuation become hyphens, which is what the person
+   meant anyway. */
+function normalizeTeamKey(raw) {
+  return String(raw == null ? '' : raw)
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+}
+
+function teamKeyProblem(key) {
+  if (!key) return 'Enter a team key, or start a new team.';
+  if (key.length < 8) return 'Team keys need at least 8 characters. Try adding the track or the year.';
+  return '';
+}
+
+/* ---------- team dialog ---------- */
+
+function openTeamPanel(){ renderTeamPanel(); el('team-overlay').classList.add('on'); }
+function closeTeamPanel(){ const o=el('team-overlay'); if(o) o.classList.remove('on'); }
+
+/* Two states, never both on screen at once. The old panel showed Connect, New
+   Team, Copy Invite Link and Disconnect together with no indication of which to
+   press first, which is exactly the confusion reported. */
+function renderTeamPanel() {
+  const connected = !!LIVE_KEY;
+  const dis = el('team-setup-disconnected'), con = el('team-setup-connected');
+  if (dis) dis.style.display = connected ? 'none' : '';
+  if (con) con.style.display = connected ? '' : 'none';
+
+  const shown = el('team-key-shown');
+  if (shown) shown.textContent = LIVE_KEY || '';
+  const label = el('team-connected-label');
+  if (label) {
+    const nm = (S.team && S.team.name) || '';
+    label.textContent = _liveOpen ? ('Synced' + (nm ? ' as ' + nm : '')) : 'Connecting...';
+  }
+  const dot = el('team-dot');
+  if (dot) dot.style.background = _liveOpen ? 'var(--green)' : 'var(--yellow)';
+  const pl = el('team-peers-line');
+  if (pl) {
+    const others = _livePeers.filter(p => p.clientId !== _liveClientId);
+    pl.textContent = others.length
+      ? 'Also connected right now: ' + others.map(p => p.name).join(', ')
+      : 'No other device connected right now. That is normal if nobody else has the app open.';
+  }
+  renderSyncSummary();
+  renderTeamIdentity();
+}
+
+/* The Config tab keeps only a one-line summary. Sync setup is something you do
+   once, so it should not occupy a card forever, but it must stay reachable. */
+function renderSyncSummary() {
+  const e = el('sync-summary');
+  if (!e) return;
+  const nm = (S.team && S.team.name) || '';
+  if (!LIVE_KEY) {
+    e.innerHTML = '<div style="font-family:var(--mono);font-size:var(--fs-md);color:var(--yellow);text-transform:none">Not connected. This device is not sharing with anyone.</div>';
+    return;
+  }
+  e.innerHTML = '<div style="font-family:var(--mono);font-size:var(--fs-md);color:var(--text-mid);text-transform:none">'
+    + '<span style="color:' + (_liveOpen ? 'var(--green)' : 'var(--yellow)') + '">●</span> '
+    + (_liveOpen ? 'Synced' : 'Connecting') + (nm ? ' · ' + nm : '')
+    + '<br><span style="color:var(--muted);font-size:var(--fs-sm)">Key: ' + LIVE_KEY + '</span></div>';
 }

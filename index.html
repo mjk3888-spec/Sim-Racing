@@ -102,8 +102,8 @@
         </div>
       </div>
     </div>
-    <div class="s-block s-hide-sm" style="min-width:110px;cursor:pointer;border-left:1px solid var(--border);" data-action="nav" data-page="config">
-      <div class="s-label">Live Sync</div>
+    <div class="s-block" style="min-width:104px;cursor:pointer;border-left:1px solid var(--border);" data-action="team.open">
+      <div class="s-label">Sync ▾</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
         <span class="s-sync-dot" id="sync-dot" style="background:var(--muted)"></span>
         <span id="sync-status" style="font-family:var(--mono);font-size:0.54rem;color:var(--muted)">Offline</span>
@@ -132,7 +132,7 @@
     <strong>This copy is not connected to your team.</strong>
     <span>Installing to the Home Screen creates a fresh copy with its own storage. Connect it once and it will stay in step.</span>
   </div>
-  <button class="btn gn" data-action="nav" data-page="config">Connect</button>
+  <button class="btn gn" data-action="team.open">Connect</button>
 </div>
 
 <div id="main">
@@ -326,45 +326,9 @@
         <div id="archive-list"></div>
       </div>
       <div class="card volt-l">
-        <div class="sec-head">Live Sync <span style="font-family:var(--mono);font-size:0.6rem;color:var(--green);margin-left:8px;text-transform:none">new</span></div>
-        <div style="font-family:var(--mono);font-size:0.66rem;color:var(--text-mid);margin-bottom:12px;text-transform:none;line-height:1.6">
-          Keeps this device in step with your other devices and your teammates, live. Tap <strong>New Team</strong> once, then <strong>Copy Invite Link</strong> and open that link on your phone. Anyone with the link can view and edit, so treat it like a key.
-        </div>
-        <div class="field" style="margin-bottom:10px">
-          <label>Team Name</label>
-          <input id="team-name-input" style="text-transform:none" placeholder="Wildthings Racing" maxlength="60" data-action="team.name" autocomplete="off">
-        </div>
-        <div class="field" style="margin-bottom:10px">
-          <label>Team Logo (optional)</label>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <div id="team-logo-preview" style="min-height:46px;display:flex;align-items:center"></div>
-            <label class="btn bl" style="cursor:pointer;margin:0">
-              Choose Image
-              <input type="file" id="team-logo-file" accept="image/*" style="display:none" data-action="team.logo">
-            </label>
-            <button class="btn rd" data-action="team.logo-clear">Remove</button>
-          </div>
-        </div>
-        <div class="field" style="margin-bottom:6px">
-          <label>Team Key — type your own, or generate one</label>
-          <input id="live-key-input" style="text-transform:none" placeholder="e.g. wildthings-daytona-2026" autocomplete="off" spellcheck="false" data-action="team.key-typed">
-        </div>
-        <div id="live-key-warn" style="display:none;font-family:var(--mono);font-size:var(--fs-sm);color:var(--yellow);text-transform:none;margin-bottom:8px;line-height:1.5"></div>
-        <div class="brow" style="gap:8px">
-          <button class="btn gn" data-action="live.connect">Connect</button>
-        </div>
-        <div class="brow" style="gap:8px;margin-top:8px">
-          <button class="btn pk" data-action="live.new">+ New Team</button>
-          <button class="btn bl" data-action="live.invite">⎙ Copy Invite Link</button>
-          <button class="btn rd" data-action="live.disconnect">Disconnect</button>
-        </div>
-        <div id="live-key-disp" style="display:none" class="sync-url-disp"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-          <span class="s-sync-dot" id="live-dot" style="background:var(--muted)"></span>
-          <span id="live-status" style="font-family:var(--mono);font-size:0.68rem;color:var(--text-mid)">Offline</span>
-        </div>
-        <div id="live-peers" style="font-family:var(--mono);font-size:0.64rem;color:var(--gulf);margin-top:6px;text-transform:none"></div>
-        <div id="live-log" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:10px;white-space:pre-wrap;text-transform:none;max-height:120px;overflow:auto"></div>
+        <div class="sec-head">Team Sync</div>
+        <div id="sync-summary"></div>
+        <div class="brow" style="margin-top:10px"><button class="btn bl" data-action="team.open">Manage team sync</button></div>
       </div>
 
       <!-- Build number lives here, not floating over the app. This is the answer
@@ -567,6 +531,62 @@
 <div class="l08">L08 · V5</div>
 
 <!-- MODALS -->
+<!-- TEAM SETUP. Sync is a critical function, so it must not live at the bottom
+     of one of six tabs. This dialog opens from the sync indicator in the header
+     from ANY tab, and from the not-connected banner.
+
+     Two states, never both. Not connected: one obvious primary action and one
+     alternative. Connected: a confirmation and the two things you might still
+     want. The previous panel showed Connect, New Team, Copy Invite Link and
+     Disconnect all at once, with no indication of which to press first. -->
+<div class="overlay" id="team-overlay"><div class="modal" style="width:440px">
+  <div class="mtitle">Team Sync</div>
+
+  <div id="team-setup-disconnected">
+    <div class="team-lead">This device is not connected to a team yet. Everything you type here stays on this device until it is.</div>
+    <div class="team-step">
+      <div class="team-step-n">First device?</div>
+      <button class="btn pk" style="width:100%;justify-content:center;padding:14px" data-action="live.new">Start a new team</button>
+      <div class="team-hint">Creates your team and connects this device.</div>
+    </div>
+    <div class="team-or">or</div>
+    <div class="team-step">
+      <div class="team-step-n">Joining a team that already exists?</div>
+      <input id="live-key-input" style="text-transform:none;width:100%" placeholder="wtr-daytona-2026" autocomplete="off" spellcheck="false" data-action="team.key-typed">
+      <div id="live-key-warn" style="display:none"></div>
+      <button class="btn gn" style="width:100%;justify-content:center;padding:14px;margin-top:8px" data-action="live.connect">Join this team</button>
+      <div class="team-hint">Spaces and capitals are fine, we tidy them up. Easiest way is to tap the invite link a teammate sends you.</div>
+    </div>
+  </div>
+
+  <div id="team-setup-connected" style="display:none">
+    <div class="team-connected-badge"><span class="s-sync-dot live" id="team-dot"></span><span id="team-connected-label">Connected</span></div>
+    <div class="team-key-line">Team key<strong id="team-key-shown"></strong></div>
+    <div id="team-peers-line" class="team-hint"></div>
+    <div class="brow" style="gap:8px;margin-top:14px;flex-direction:column;align-items:stretch">
+      <button class="btn bl" style="justify-content:center;padding:13px" data-action="live.invite">Copy invite link for teammates</button>
+      <button class="btn rd" style="justify-content:center;padding:13px" data-action="live.disconnect">Leave this team</button>
+    </div>
+    <div class="team-hint" style="margin-top:10px">Leaving only disconnects this device. It does not delete anything for anyone else.</div>
+  </div>
+
+  <hr>
+  <div class="team-step-n">Team identity (shared with everyone)</div>
+  <div class="field"><label>Team Name</label>
+    <input id="team-name-input" style="text-transform:none" placeholder="Wildthings Racing" maxlength="60" data-action="team.name" autocomplete="off"></div>
+  <div class="field"><label>Team Logo (optional)</label>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div id="team-logo-preview" style="min-height:44px;display:flex;align-items:center"></div>
+      <label class="btn bl" style="cursor:pointer;margin:0">Choose Image
+        <input type="file" id="team-logo-file" accept="image/*" style="display:none" data-action="team.logo"></label>
+      <button class="btn rd" data-action="team.logo-clear">Remove</button>
+    </div>
+  </div>
+  <div id="live-log" style="font-family:var(--mono);font-size:var(--fs-xs);color:var(--muted);margin-top:10px;white-space:pre-wrap;text-transform:none;max-height:90px;overflow:auto"></div>
+
+  <div class="mfoot"><button class="btn" data-action="team.close">Close</button></div>
+</div></div>
+
 <div class="overlay" id="entries-overlay"><div class="modal" style="width:460px">
   <div class="mtitle">Your Cars</div>
   <div style="font-family:var(--mono);font-size:0.64rem;color:var(--text-mid);margin-bottom:14px;text-transform:none;line-height:1.6">
