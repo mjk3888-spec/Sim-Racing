@@ -111,9 +111,6 @@ const ACTIONS = {
   'live.new':        { run: () => liveNewTeam() },
   'live.invite':     { run: () => liveCopyInvite() },
 
-  // ---- OLD SYNC (Google Apps Script, retiring) -----------------------------
-  'sync.connect':    { run: () => saveSyncUrl() },
-  'sync.disconnect': { run: () => disconnectSync() },
 
   // ---- STINT SCHEDULE ------------------------------------------------------
   'opt.run':            { run: (e, t) => optimizeStints(t.dataset.scope === 'unassigned') },
@@ -185,6 +182,16 @@ const ACTIONS = {
   'check.reset':  { run: () => resetChecks() },
   'check.toggle': { run: (e, t) => toggleCL(t.dataset.cat, +t.dataset.i) },
   'check.delete': { run: (e, t) => delCheck(t.dataset.cat, +t.dataset.i) },
+
+  // ---- ENTRIES (cars) ------------------------------------------------------
+  'entries.open':   { run: () => openEntries() },
+  'entries.close':  { run: () => closeEntries() },
+  'entries.switch': { run: (e, t) => switchEntry(t.dataset.id) },
+  'entries.new':    { run: () => addEntry() },
+  // Rename and delete sit INSIDE the switch row, so nearest-ancestor resolution
+  // is what stops tapping them from also switching entry.
+  'entries.rename': { run: (e, t) => renameEntry(t.dataset.id) },
+  'entries.delete': { run: (e, t) => deleteEntry(t.dataset.id) },
 
   // ---- SAMPLE DATA ---------------------------------------------------------
   'demo.load': { run: () => loadDemoEvent() },

@@ -50,8 +50,11 @@
     <div class="s-brand">
       <img src="assets/logo.svg" alt="LUMINARY MANAGER" width="1254" height="1254" decoding="async">
     </div>
-    <div class="s-block">
-      <div class="s-label">Event</div>
+    <!-- The event name IS the entry switcher. Tapping it opens the list of cars.
+         Making it the switcher rather than adding a control costs no width on a
+         phone, where the header is already tight. -->
+    <div class="s-block" style="cursor:pointer" data-action="entries.open">
+      <div class="s-label">Entry <span id="entry-count" style="color:var(--volt);display:none"></span> ▾</div>
       <div style="font-family:var(--display);font-size:0.76rem;font-weight:700;color:var(--volt);line-height:1.2;margin-bottom:2px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="s-event">No Event</div>
       <div style="font-family:var(--mono);font-size:0.52rem;color:var(--muted)" id="s-car-class"></div>
     </div>
@@ -323,30 +326,6 @@
         <div id="live-log" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:10px;white-space:pre-wrap;text-transform:none;max-height:120px;overflow:auto"></div>
       </div>
 
-      <div class="card gulf-l">
-        <div class="sec-head" style="color:var(--gulf);border-color:var(--gulf-border)">Old Sync (Google Sheet) — being retired</div>
-        <div style="font-family:var(--mono);font-size:0.64rem;color:var(--orange);margin-bottom:10px;text-transform:none;line-height:1.6">
-          Superseded by Live Sync above. Kept for one release as a fallback. The deployed script no longer matches this app, so it will not work as-is. Do not rely on it.
-        </div>
-        <div class="sync-panel">
-          <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--volt);margin-bottom:12px">Setup Instructions</div>
-          <div class="sync-step"><div class="sync-num">1</div><div>Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank">sheets.google.com</a>. You can name it anything — it just stores the sync state.</div></div>
-          <div class="sync-step"><div class="sync-num">2</div><div>In the sheet, go to <strong>Extensions → Apps Script</strong>. Delete any existing code and paste the <strong>Luminary Sync Script</strong> included in your download package (see README).</div></div>
-          <div class="sync-step"><div class="sync-num">3</div><div>Click <strong>Deploy → New Deployment → Web App</strong>. Set Execute As: <strong>Me</strong>. Set Who Has Access: <strong>Anyone</strong>. Click Deploy and authorize when prompted.</div></div>
-          <div class="sync-step"><div class="sync-num">4</div><div>Copy the <strong>Web App URL</strong> and paste it in the field below. Click Connect.</div></div>
-          <div class="sync-step" style="border-bottom:none"><div class="sync-num">5</div><div>Share the same Web App URL with all teammates. Each person pastes it into their own copy of the app to stay in sync during the event.</div></div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <input id="sync-url-input" style="flex:1;text-transform:none" placeholder="Paste Web App URL here...">
-          <button class="btn bl" data-action="sync.connect">Connect</button>
-          <button class="btn rd" data-action="sync.disconnect">Disconnect</button>
-        </div>
-        <div id="sync-url-disp" style="display:none" class="sync-url-disp"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-          <span class="s-sync-dot" id="sync-dot2" style="background:var(--muted)"></span>
-          <span id="sync-status2" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted)">Offline</span>
-        </div>
-      </div>
       <!-- Build number lives here, not floating over the app. This is the answer
            to "is this device on the current version or a stale cache?", which is
            something you check deliberately, not something you stare at. -->
@@ -547,6 +526,18 @@
 <div class="l08">L08 · V5</div>
 
 <!-- MODALS -->
+<div class="overlay" id="entries-overlay"><div class="modal" style="width:460px">
+  <div class="mtitle">Your Cars</div>
+  <div style="font-family:var(--mono);font-size:0.64rem;color:var(--text-mid);margin-bottom:14px;text-transform:none;line-height:1.6">
+    Each entry is one car in one event. Tap one to switch to it. They all sync to your team.
+  </div>
+  <div id="entries-list"></div>
+  <div class="mfoot">
+    <button class="btn pk" style="margin-right:auto" data-action="entries.new">+ Add Car</button>
+    <button class="btn" data-action="entries.close">Close</button>
+  </div>
+</div></div>
+
 <div class="overlay" id="drv-overlay"><div class="modal">
   <div class="mtitle" id="drv-mtitle">Add Driver</div>
   <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
@@ -643,6 +634,7 @@
 <script src="js/optimizer.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/sync.js"></script>
+<script src="js/entries.js"></script>
 <script src="js/live.js"></script>
 <script src="js/demo.js"></script>
 <script src="js/actions.js"></script>

@@ -115,3 +115,15 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .alert.warn{background:rgba(240,192,64,0.07);border-color:rgba(240,192,64,0.28);color:var(--yellow);}
 .alert.danger{background:var(--red-dim);border-color:var(--red-border);color:var(--red);}
 .alert.ok{background:var(--green-dim);border-color:rgba(57,255,20,0.28);color:var(--green);}
+
+/* ENTRY (car) cards in the switcher. One row per car in the event. */
+.entry-card{display:flex;align-items:center;gap:10px;padding:11px 12px;margin-bottom:8px;
+  background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--border-bright);
+  border-radius:4px;cursor:pointer;transition:border-color .15s,background .15s;}
+.entry-card:hover{border-color:var(--border-bright);background:var(--surface);}
+.entry-card.active{border-left-color:var(--volt);background:rgba(223,255,0,0.04);}
+.entry-name{font-family:var(--display);font-size:0.7rem;font-weight:700;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.entry-sub{font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:2px;
+  text-transform:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.entry-live{font-family:var(--mono);font-size:0.62rem;margin-top:4px;text-transform:none;}

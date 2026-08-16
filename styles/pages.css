@@ -109,11 +109,18 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
   .s-cd{font-size:1rem;}
   .s-drv-name{font-size:0.66rem;}
   .s-drv-sub{font-size:0.5rem;}
-  .tab{padding:11px 13px;font-size:0.44rem;letter-spacing:0.1em;}
+  /* NAV: with the type ramp corrected, six tabs on one row no longer fit a
+     phone and half of them scrolled off unreachable. Wrapping to two rows shows
+     all six at once, which matters because a strategist should never hunt for
+     the Schedule tab mid-stint. */
+  #nav{flex-wrap:wrap;overflow-x:visible;}
+  .tab{padding:9px 11px;font-size:0.42rem;letter-spacing:0.06em;flex:1 1 auto;text-align:center;}
   .sec-head{font-size:0.46rem;}
   .stat-l{font-size:0.36rem;}
   .stat-v{font-size:1rem;}
   .page{padding:8px;}
+  /* The event name is the entry switcher, so it must not be clipped to 150px. */
+  #s-event{max-width:none!important;font-size:0.66rem!important;}
 }
 
 /* ===================== PWA STANDALONE (installed to Home Screen) =====================

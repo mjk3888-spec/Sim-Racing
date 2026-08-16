@@ -140,7 +140,10 @@ window.LUM = (function () {
      dispatcher calls them, so a missing one is a dead button. */
   const REFERENCED = ['pg', 'quickLog', 'sc', 'applySimMode', 'checkPrereqs', 'syncHourDrop',
     'syncDurDrop', 'syncIghrDrop', 'openDrvModal', 'addCol', 'removeLastCol', 'openTNote',
-    'archiveEvent', 'exportScheduleCSV', 'exportScheduleText', 'saveSyncUrl', 'disconnectSync',
+    'archiveEvent', 'exportScheduleCSV', 'exportScheduleText',
+    'liveConnect', 'liveDisconnect', 'liveNewTeam', 'liveCopyInvite',
+    'openEntries', 'closeEntries', 'switchEntry', 'addEntry', 'renameEntry', 'deleteEntry',
+    'ensureEntries', 'entrySummary', 'saveEntrySnapshot',
     'optimizeStints', 'saveSchMeta', 'saveSchMetaPos', 'refreshAvTimeDrops', 'applyWindow',
     'calcCompare', 'prefillCompare', 'calcFuel', 'calcPit', 'openGoal', 'openCheck',
     'resetChecks', 'loadFromLib', 'removeFromLib', 'onTZChange', 'confirmDeleteDriver',

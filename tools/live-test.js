@@ -146,7 +146,36 @@ window.LIVETEST = (function () {
           ev(A, 'S.config.track') === 'Le Mans' && ev(B, 'S.config.track') === 'Le Mans',
           'A=' + ev(A, 'S.config.track') + ' B=' + ev(B, 'S.config.track'));
 
-        // 9. A device that drops off and returns catches up on what it missed.
+        // 9. MULTI-CAR. A second car added on the phone must appear on the PC,
+        //    with its own separate data, and without disturbing the first car.
+        const carsBefore = ev(B, 'Object.keys(S.entries).length');
+        ev(A, 'addEntry(); S.config.car="Porsche 963"; S.config.name="Second Car Event"; persist();');
+        const gotEntry = await until(() => ev(B, 'Object.keys(S.entries).length') === carsBefore + 1, 12000);
+        ok('a second car added on one device appears on the other', gotEntry,
+          'A=' + ev(A, 'Object.keys(S.entries).length') + ' B=' + ev(B, 'Object.keys(S.entries).length'));
+
+        if (gotEntry) {
+          const activeId = ev(A, 'S.activeEntry');
+          const gotCar = await until(() =>
+            ev(B, 'JSON.stringify((S.entries[' + JSON.stringify(activeId) + '].state||{}).config||{})').indexOf('Porsche 963') >= 0, 12000);
+          ok('the second car syncs its own separate data', gotCar,
+            'B copy=' + ev(B, 'JSON.stringify((S.entries[' + JSON.stringify(activeId) + '].state||{}).config||{})').slice(0, 120));
+
+          // The first car must be untouched by any of that.
+          ok('adding a car does not disturb the first one',
+            ev(B, 'S.config.track') === 'Le Mans', 'B track=' + ev(B, 'S.config.track'));
+        }
+
+        // 10. A device that drops off and returns catches up on what it missed.
+        //     NOTE: A is now viewing the second car while B views the first.
+        //     Two devices viewing different cars at once is correct and
+        //     intended, so put A back on B's car before comparing like for like.
+        const sharedId = ev(B, 'S.activeEntry');
+        ev(A, 'switchEntry(' + JSON.stringify(sharedId) + ');');
+        await wait(900);
+        ok('a device can switch to any car in the team',
+          ev(A, 'S.activeEntry') === sharedId, 'A active=' + ev(A, 'S.activeEntry'));
+
         ev(B, '_liveWs.close();');
         await wait(800);
         ev(A, 'S.config.name="Bathurst 12H";persist();');

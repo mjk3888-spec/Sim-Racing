@@ -58,52 +58,113 @@ let _liveSeeded = false;
 
 /* ---------- flattening S into syncable paths ---------- */
 
-function livePaths() {
-  const p = {};
-  const E = 'e/' + LIVE_ENTRY + '/';
-  const c = S.config || {};
+function livePathsForState(st, id, p) {
+  const E = 'e/' + id + '/';
+  const c = st.config || {};
   Object.keys(c).forEach(k => { p[E + 'config/' + k] = c[k]; });
-  p[E + 'drivers'] = S.drivers;
-  p[E + 'settingCols'] = S.settingCols;
-  p[E + 'goals'] = S.goals;
-  p[E + 'tnotes'] = S.tnotes;
-  p[E + 'raceLog'] = S.raceLog;
-  Object.keys(S.checks || {}).forEach(k => { p[E + 'checks/' + k] = S.checks[k]; });
-  Object.keys(S.schMeta || {}).forEach(k => { p[E + 'schMeta/' + k] = S.schMeta[k]; });
-  Object.keys(S.avail || {}).forEach(k => { p[E + 'avail/' + k] = S.avail[k]; });
-  (S.stints || []).forEach(s => {
+  p[E + 'drivers'] = st.drivers;
+  p[E + 'settingCols'] = st.settingCols;
+  p[E + 'goals'] = st.goals;
+  p[E + 'tnotes'] = st.tnotes;
+  p[E + 'raceLog'] = st.raceLog;
+  Object.keys(st.checks || {}).forEach(k => { p[E + 'checks/' + k] = st.checks[k]; });
+  Object.keys(st.schMeta || {}).forEach(k => { p[E + 'schMeta/' + k] = st.schMeta[k]; });
+  Object.keys(st.avail || {}).forEach(k => { p[E + 'avail/' + k] = st.avail[k]; });
+  (st.stints || []).forEach(s => {
     STINT_SYNCED_FIELDS.forEach(f => { p[E + 'stint/' + s.num + '/' + f] = s[f]; });
   });
   return p;
 }
 
-/* Applies one server field onto S. Returns 'config' when the change affects the
-   schedule shape, so the caller knows to rebuild stints. */
-function liveApplyPath(path, value) {
-  const E = 'e/' + LIVE_ENTRY + '/';
-  if (path.indexOf(E) !== 0) return null;     // another entry, not ours yet
-  const rest = path.slice(E.length);
-  const bits = rest.split('/');
+/* Every entry syncs, not just the one on screen, because the whole point of the
+   car list is watching all of them at once. The active entry's data is read
+   from S; the rest from their parked state. */
+function livePaths() {
+  const p = {};
+  const ids = Object.keys(S.entries || {});
+  if (!ids.length) return livePathsForState(currentEntryFields(), LIVE_ENTRY, p);
+  ids.forEach(id => {
+    const meta = S.entries[id] || {};
+    p['entries/' + id + '/name'] = meta.name || '';
+    p['entries/' + id + '/created'] = meta.created || 0;
+    p['entries/' + id + '/deleted'] = !!meta.deleted;
+    livePathsForState(entryStateOf(id), id, p);
+  });
+  return p;
+}
 
-  if (bits[0] === 'config' && bits[1]) { S.config[bits[1]] = value; return 'config'; }
-  if (bits[0] === 'drivers') { S.drivers = value || []; return 'drivers'; }
-  if (bits[0] === 'settingCols') { S.settingCols = value || []; return 'drivers'; }
-  if (bits[0] === 'goals') { S.goals = value || []; return 'goals'; }
-  if (bits[0] === 'tnotes') { S.tnotes = value || []; return 'tnotes'; }
-  if (bits[0] === 'raceLog') { S.raceLog = value || []; return 'log'; }
-  if (bits[0] === 'checks' && bits[1]) { S.checks[bits[1]] = value || []; return 'goals'; }
-  if (bits[0] === 'schMeta' && bits[1]) { if (!S.schMeta) S.schMeta = {}; S.schMeta[bits[1]] = value; return 'log'; }
-  if (bits[0] === 'avail' && bits[1]) { S.avail[bits.slice(1).join('/')] = value; return 'avail'; }
-  if (bits[0] === 'stint' && bits[1] && bits[2]) {
-    const num = parseInt(bits[1], 10);
-    const st = (S.stints || []).find(x => x.num === num);
-    // A stint we do not have yet arrives before the config that creates it.
-    // Dropping it is safe: buildStints() runs after config lands, and the
-    // sender's value is still on the server for the next snapshot.
-    if (st && STINT_SYNCED_FIELDS.indexOf(bits[2]) >= 0) { st[bits[2]] = value; return 'stint'; }
+/* Applies one server field. Returns 'config' when the change affects the active
+   entry's schedule shape, so the caller knows to rebuild stints, or 'entries'
+   when only the car list changed. */
+function liveApplyPath(path, value) {
+  const bits = path.split('/');
+
+  // entries/<id>/<field> — the car list itself
+  if (bits[0] === 'entries' && bits[1] && bits[2]) {
+    const id = bits[1];
+    if (!S.entries) S.entries = {};
+    if (!S.entries[id]) S.entries[id] = { id, name: 'Entry', created: 0, state: blankEntryState() };
+    if (bits[2] === 'deleted' && value) {
+      // Never delete the entry currently on screen out from under someone.
+      if (id !== S.activeEntry) delete S.entries[id];
+      else S.entries[id].deleted = true;
+      return 'entries';
+    }
+    if (bits[2] === 'name') { S.entries[id].name = value || 'Entry'; S.entries[id].renamed = true; }
+    if (bits[2] === 'created') S.entries[id].created = value || 0;
+    return 'entries';
+  }
+
+  if (bits[0] !== 'e' || !bits[1]) return null;
+  const id = bits[1];
+  const rest = bits.slice(2);
+  if (!rest.length) return null;
+
+  // Route to S directly for the active entry, or into the parked state for the
+  // others. Everything the app renders reads S, so this keeps both correct.
+  const isActive = (id === S.activeEntry) || (!S.entries || !Object.keys(S.entries).length);
+  let t;
+  if (isActive) t = S;
+  else {
+    if (!S.entries) S.entries = {};
+    if (!S.entries[id]) S.entries[id] = { id, name: 'Entry', created: 0, state: blankEntryState() };
+    if (!S.entries[id].state) S.entries[id].state = blankEntryState();
+    t = S.entries[id].state;
+  }
+  const mark = k => isActive ? k : 'entries';
+
+  if (rest[0] === 'config' && rest[1]) { if (!t.config) t.config = {}; t.config[rest[1]] = value; return mark('config'); }
+  if (rest[0] === 'drivers') { t.drivers = value || []; return mark('drivers'); }
+  if (rest[0] === 'settingCols') { t.settingCols = value || []; return mark('drivers'); }
+  if (rest[0] === 'goals') { t.goals = value || []; return mark('goals'); }
+  if (rest[0] === 'tnotes') { t.tnotes = value || []; return mark('tnotes'); }
+  if (rest[0] === 'raceLog') { t.raceLog = value || []; return mark('log'); }
+  if (rest[0] === 'checks' && rest[1]) { if (!t.checks) t.checks = {}; t.checks[rest[1]] = value || []; return mark('goals'); }
+  if (rest[0] === 'schMeta' && rest[1]) { if (!t.schMeta) t.schMeta = {}; t.schMeta[rest[1]] = value; return mark('log'); }
+  if (rest[0] === 'avail' && rest[1]) { if (!t.avail) t.avail = {}; t.avail[rest.slice(1).join('/')] = value; return mark('avail'); }
+  if (rest[0] === 'stint' && rest[1] && rest[2]) {
+    const num = parseInt(rest[1], 10);
+    const st = (t.stints || []).find(x => x.num === num);
+    // A stint field can arrive before the config that creates that stint.
+    // Dropping it is safe: buildStints() runs once config lands, and the value
+    // is still on the server for the next snapshot.
+    if (st && STINT_SYNCED_FIELDS.indexOf(rest[2]) >= 0) { st[rest[2]] = value; return mark('stint'); }
     return null;
   }
   return null;
+}
+
+/* Deleting an entry has to be broadcast as a tombstone rather than by removing
+   fields: another device that never sees the removal would otherwise resurrect
+   the whole car from its own copy on the next reconnect. */
+function liveDeleteEntry(id) {
+  if (!LIVE_KEY) return;
+  const ts = Date.now();
+  const path = 'entries/' + id + '/deleted';
+  _liveSnapshot[path] = JSON.stringify(true);
+  if (!liveSend({ type: 'patch', path, value: true, ts, clientId: _liveClientId })) {
+    _liveQueue.set(path, { value: true, ts });
+  }
 }
 
 /* ---------- sending ---------- */
@@ -159,6 +220,8 @@ function liveScheduleRender(kinds) {
       try { renderChecklists(); renderGoals(); renderGoalsDash(); } catch (e) {}
       try { renderSchedule(); buildAvail(); loadSchMeta(); } catch (e) {}
       try { renderStatusLog(); checkPrereqs(); updateDash(); } catch (e) {}
+      // Car list and switcher, cheap and always worth keeping current.
+      try { updateEntryLabel(); if (el('entries-overlay').classList.contains('on')) renderEntries(); } catch (e) {}
       _lp();
     } finally { _liveApplying = false; }
     kinds.clear();

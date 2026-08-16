@@ -413,6 +413,84 @@ window.LUMTEST = (function () {
         return !threw || 'dispatcher threw on unknown action';
       });
 
+      // ---- ENTRIES (multiple cars) -----------------------------------------
+      check('entries: an existing single event is migrated into one entry', () => {
+        ensureEntries();
+        const ids = Object.keys(S.entries || {});
+        return !!(ids.length >= 1 && S.activeEntry && S.entries[S.activeEntry])
+          || 'entries=' + ids.length + ' active=' + S.activeEntry;
+      });
+      check('entries: the ACTIVE entry keeps its data in S, not duplicated', () => {
+        // Storing it twice would multiply localStorage with every car added.
+        return S.entries[S.activeEntry].state === null
+          || 'active entry is holding a duplicate copy';
+      });
+      check('entries.new: adding a car carries over event and roster', () => {
+        S.config.name = 'Spa 6H'; S.config.track = 'Spa-Francorchamps';
+        S.config.car = 'BMW M4 GT3'; persist();
+        const before = Object.keys(S.entries).length;
+        const drivers = S.drivers.length;
+        click($('[data-action="entries.new"]'));
+        if (Object.keys(S.entries).length !== before + 1) return 'entry not added';
+        if (S.config.name !== 'Spa 6H') return 'event name not carried over';
+        if (S.config.track !== 'Spa-Francorchamps') return 'track not carried over';
+        if (S.drivers.length !== drivers) return 'roster not carried over';
+        if (S.config.car !== '') return 'car should start blank, got ' + S.config.car;
+        return true;
+      });
+      check('entries: each car keeps its OWN data across switches', () => {
+        const ids = Object.keys(S.entries);
+        S.config.car = 'Porsche 911 GT3 R (992)'; persist();
+        switchEntry(ids[0]);
+        if (S.config.car !== 'BMW M4 GT3') return 'first car lost its data: ' + S.config.car;
+        switchEntry(ids[1]);
+        if (S.config.car !== 'Porsche 911 GT3 R (992)') return 'second car lost its data: ' + S.config.car;
+        return true;
+      });
+      check('entries: stints stay with their own car', () => {
+        const ids = Object.keys(S.entries);
+        switchEntry(ids[0]);
+        const n0 = S.stints.length;
+        switchEntry(ids[1]);
+        const n1 = S.stints.length;
+        switchEntry(ids[0]);
+        return S.stints.length === n0 || `stint counts bled across entries (${n0} vs ${n1})`;
+      });
+      check('entrySummary: reports on a car that is NOT on screen', () => {
+        const ids = Object.keys(S.entries);
+        const other = ids.find(i => i !== S.activeEntry);
+        const s = entrySummary(other);
+        return (s && typeof s.name === 'string' && s.car === 'Porsche 911 GT3 R (992)')
+          || 'summary wrong: ' + JSON.stringify(s);
+      });
+      check('entries.delete: refuses to delete the last remaining car', () => {
+        const ids = Object.keys(S.entries);
+        while (Object.keys(S.entries).length > 1) {
+          const victim = Object.keys(S.entries).find(i => i !== S.activeEntry);
+          deleteEntry(victim);
+        }
+        const before = Object.keys(S.entries).length;
+        deleteEntry(S.activeEntry);
+        return Object.keys(S.entries).length === before || 'it deleted the only entry';
+      });
+      check('entry switcher is reachable from the header', () => {
+        const trigger = document.querySelector('#strip [data-action="entries.open"]');
+        if (!trigger) return 'no switcher in the header';
+        click(trigger);
+        const open = $('#entries-overlay').classList.contains('on');
+        click($('[data-action="entries.close"]'));
+        return open || 'switcher did not open';
+      });
+
+      // ---- READABILITY -----------------------------------------------------
+      check('root font size is set, so rem no longer falls back to 16px', () => {
+        const px = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        return px >= 20 || 'root font-size is ' + px + 'px';
+      });
+      check('the retired Google Sheet sync card is gone', () => {
+        return (!$('#sync-url-input') && !$('#sync-dot2')) || 'old sync card still present';
+      });
+
       // ---- SAMPLE EVENT ----------------------------------------------------
       // Destructive: replaces all state. Must stay LAST in this suite.
       check('demo.load: builds a complete, currently-running race', () => {

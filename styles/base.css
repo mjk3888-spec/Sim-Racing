@@ -4,6 +4,13 @@
    tokens.css -> base.css -> components.css -> pages.css */
 
 *{box-sizing:border-box;margin:0;padding:0}
+/* READABILITY: this one line controls the size of nearly every piece of text.
+   Almost all sizing in this app is in rem, and rem resolves against the ROOT
+   element, not body. Because html had no font-size, everything fell back to the
+   browser default of 16px, which rendered 0.32rem as 5.1px and body text at
+   10.9px. The body{font-size:14px} below does NOT affect rem; that is the trap.
+   Measured: nothing overflows at 21px, pages start breaking at 23px. */
+html{font-size:21px}
 html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;display:flex;flex-direction:column;text-transform:uppercase;}
 input,textarea{text-transform:none;}
