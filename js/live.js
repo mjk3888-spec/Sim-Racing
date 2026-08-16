@@ -37,6 +37,8 @@ const LIVE_WS = 'wss://luminary-sync.mjk3888.workers.dev';
 const LIVE_ENTRY = 'default';           // Phase 2 turns this into a real entry id
 const LIVE_KEY_STORE = 'lum_live_key';
 const LIVE_NAME_STORE = 'lum_live_name';
+const LIVE_TEAMNAME_STORE = 'lum_team_name';
+const LIVE_TEAMPASS_STORE = 'lum_team_pass';
 
 const STINT_SYNCED_FIELDS = ['driver', 'stintType', 'actualEnd', 'actualLaps',
                              'notes', 'done', 'damage', 'damageTime', 'position'];
@@ -456,6 +458,7 @@ function liveRenderJoinBanner() {
 function liveRenderPanel() {
   liveRenderJoinBanner();
   renderTeamIdentity();
+  liveRestoreTeamFields();
   try{ if(el('team-overlay').classList.contains('on')) renderTeamPanel(); }catch(e){}
   renderSyncSummary();
   const inp = el('live-key-input');
@@ -503,51 +506,6 @@ function saveTeamName() {
   S.team.name = (gv('team-name-input') || '').slice(0, 60);
   persist();
   renderTeamIdentity();
-}
-
-/* Uploaded logos are downscaled and re-encoded before storage. A photo straight
-   off a phone is several megabytes, which would blow past both the sync
-   message limit and the localStorage quota. 512px is far more than the header
-   or splash ever needs. */
-const TEAM_LOGO_MAX_PX = 512;
-const TEAM_LOGO_MAX_BYTES = 90 * 1024;
-
-function onTeamLogoPicked(input) {
-  const file = input && input.files && input.files[0];
-  if (!file) return;
-  if (!/^image\//.test(file.type)) { alert('That is not an image file.'); input.value = ''; return; }
-  const reader = new FileReader();
-  reader.onerror = () => { alert('Could not read that file.'); input.value = ''; };
-  reader.onload = () => {
-    const img = new Image();
-    img.onerror = () => { alert('That image could not be read. Try a PNG or JPEG.'); input.value = ''; };
-    img.onload = () => {
-      const scale = Math.min(1, TEAM_LOGO_MAX_PX / Math.max(img.width, img.height));
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
-      const c = document.createElement('canvas');
-      c.width = w; c.height = h;
-      const cx = c.getContext('2d');
-      cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
-      cx.drawImage(img, 0, 0, w, h);
-      // PNG keeps transparency, which most team logos rely on. Fall back to
-      // JPEG only if PNG comes out too big to sync.
-      let out = c.toDataURL('image/png');
-      if (out.length > TEAM_LOGO_MAX_BYTES) out = c.toDataURL('image/jpeg', 0.86);
-      if (out.length > TEAM_LOGO_MAX_BYTES) {
-        alert('That image is too detailed to sync. Try a simpler or smaller logo.');
-        input.value = '';
-        return;
-      }
-      if (!S.team) S.team = { name: '', logo: '' };
-      S.team.logo = out;
-      persist();
-      renderTeamIdentity();
-      input.value = '';
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
 }
 
 function clearTeamLogo() {
@@ -668,4 +626,160 @@ function renderSyncSummary() {
     + '<span style="color:' + (_liveOpen ? 'var(--green)' : 'var(--yellow)') + '">●</span> '
     + (_liveOpen ? 'Synced' : 'Connecting') + (nm ? ' · ' + nm : '')
     + '<br><span style="color:var(--muted);font-size:var(--fs-sm)">Key: ' + LIVE_KEY + '</span></div>';
+}
+
+/* ---------- team name + password ---------- */
+
+/* Michael's framing, and it is better than what was there: people understand
+   "team name and password", not "team key". The key still exists underneath,
+   because the server needs one, but it is DERIVED from the two familiar fields
+   instead of being something to remember and type.
+
+   This also quietly fixes the security trade-off he had accepted. A memorable
+   key like "wildthings" was guessable; a memorable NAME plus a password is not,
+   because the derived key is a hash of both. He gets the memorability he wanted
+   without the exposure he was willing to live with. */
+async function deriveTeamKey(name, password) {
+  const material = normalizeTeamKey(name) + ':' + String(password == null ? '' : password);
+  const bytes = new TextEncoder().encode('luminary-team-v1:' + material);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const hex = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+  // 40 hex characters is far beyond guessing, and still matches the server's
+  // [a-z0-9-]{8,64} format.
+  return hex.slice(0, 12) + '-' + hex.slice(12, 24) + '-' + hex.slice(24, 40);
+}
+
+async function liveJoinByNamePassword() {
+  const name = (gv('team-name-input') || '').trim();
+  const pass = gv('team-pass-input') || '';
+  if (!name) { alert('Enter your team name.'); return; }
+  if (pass.length < 4) { alert('Use a team password of at least 4 characters.\n\nEveryone on the team types the same two things to join.'); return; }
+  let key;
+  try { key = await deriveTeamKey(name, pass); }
+  catch (e) { alert('Could not set up the team on this device.'); return; }
+
+  if (LIVE_KEY && key !== LIVE_KEY && S.config && S.config.name &&
+      !confirm('Join "' + name + '"?\n\nIf that team already has an event, it will REPLACE what is on this device.\n\nArchived events are kept.')) return;
+
+  if (!S.team) S.team = { name: '', logo: '' };
+  S.team.name = name;
+  localStorage.setItem(LIVE_TEAMNAME_STORE, name);
+  localStorage.setItem(LIVE_TEAMPASS_STORE, pass);
+  LIVE_KEY = key;
+  localStorage.setItem(LIVE_KEY_STORE, LIVE_KEY);
+  persist();
+  liveRenderPanel();
+  liveOpenSocket();
+}
+
+/* An invite link still carries the derived key, so a teammate who taps it never
+   has to be told the password at all. */
+function liveRestoreTeamFields() {
+  const n = el('team-name-input'), p = el('team-pass-input');
+  if (n && !n.value) n.value = localStorage.getItem(LIVE_TEAMNAME_STORE) || (S.team && S.team.name) || '';
+  if (p && !p.value) p.value = localStorage.getItem(LIVE_TEAMPASS_STORE) || '';
+}
+
+/* ---------- team logo: crop, then guaranteed-to-fit encode ---------- */
+
+/* The first version simply refused an image that would not fit, telling Michael
+   it was "too detailed" with nothing he could do about it. That is a bad
+   answer: the app knows how to make any image fit, so it should.
+
+   Two changes. A square CROP step, because a logo needs to be square and
+   letting the app guess which part of a photo matters is worse than asking.
+   And an encoder that STEPS DOWN until it fits instead of giving up, so there
+   is no image that cannot be used. */
+
+const TEAM_LOGO_BUDGET = 110 * 1024;   // comfortably inside the 128KB sync limit
+let _cropImg = null, _cropScale = 1, _cropX = 0, _cropY = 0;
+
+function onTeamLogoPicked(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { alert('That is not an image file.'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onerror = () => { alert('Could not read that file.'); input.value = ''; };
+  reader.onload = () => {
+    const img = new Image();
+    img.onerror = () => { alert('That image could not be read. Try a PNG or JPEG.'); input.value = ''; };
+    img.onload = () => { input.value = ''; openLogoCrop(img); };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function openLogoCrop(img) {
+  _cropImg = img;
+  const box = 260;
+  // Start with the largest square that fits, centred.
+  const side = Math.min(img.width, img.height);
+  _cropScale = box / side;
+  _cropX = (img.width - side) / 2;
+  _cropY = (img.height - side) / 2;
+  el('logo-crop-overlay').classList.add('on');
+  drawLogoCrop();
+}
+
+function closeLogoCrop() {
+  const o = el('logo-crop-overlay');
+  if (o) o.classList.remove('on');
+  _cropImg = null;
+}
+
+function drawLogoCrop() {
+  const c = el('logo-crop-canvas');
+  if (!c || !_cropImg) return;
+  const box = c.width;
+  const x = c.getContext('2d');
+  x.fillStyle = '#050505'; x.fillRect(0, 0, box, box);
+  const side = Math.min(_cropImg.width, _cropImg.height) / (el('logo-crop-zoom') ? (parseFloat(el('logo-crop-zoom').value) || 1) : 1);
+  const maxX = Math.max(0, _cropImg.width - side), maxY = Math.max(0, _cropImg.height - side);
+  _cropX = Math.min(Math.max(0, _cropX), maxX);
+  _cropY = Math.min(Math.max(0, _cropY), maxY);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  x.drawImage(_cropImg, _cropX, _cropY, side, side, 0, 0, box, box);
+}
+
+function nudgeLogoCrop(dx, dy) {
+  if (!_cropImg) return;
+  const side = Math.min(_cropImg.width, _cropImg.height) / (parseFloat(gv('logo-crop-zoom')) || 1);
+  _cropX += dx * side * 0.12;
+  _cropY += dy * side * 0.12;
+  drawLogoCrop();
+}
+
+/* Steps down through sizes and quality until the result fits the budget. An
+   image that will not fit at 512 PNG will fit at 256 JPEG, so there is always
+   an answer. */
+function encodeWithinBudget(sourceCanvas) {
+  const attempts = [
+    [512, 'image/png', undefined], [384, 'image/png', undefined],
+    [512, 'image/jpeg', 0.9], [384, 'image/jpeg', 0.86],
+    [256, 'image/jpeg', 0.82], [192, 'image/jpeg', 0.78],
+    [128, 'image/jpeg', 0.7]
+  ];
+  for (const [size, type, q] of attempts) {
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const x = c.getContext('2d');
+    x.fillStyle = '#050505'; x.fillRect(0, 0, size, size);
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    x.drawImage(sourceCanvas, 0, 0, size, size);
+    const out = c.toDataURL(type, q);
+    if (out.length <= TEAM_LOGO_BUDGET) return out;
+  }
+  return null;
+}
+
+function saveLogoCrop() {
+  const c = el('logo-crop-canvas');
+  if (!c || !_cropImg) return;
+  const out = encodeWithinBudget(c);
+  if (!out) { alert('Could not compress that image far enough. Try a simpler logo.'); return; }
+  if (!S.team) S.team = { name: '', logo: '' };
+  S.team.logo = out;
+  persist();
+  renderTeamIdentity();
+  closeLogoCrop();
 }

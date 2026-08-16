@@ -116,6 +116,11 @@ const ACTIONS = {
   'team.name':       { on: 'input',  run: () => saveTeamName() },
   'team.logo':       { on: 'change', run: (e, t) => onTeamLogoPicked(t) },
   'team.logo-clear': { run: () => clearTeamLogo() },
+  'team.join':       { run: () => liveJoinByNamePassword() },
+  'logo.zoom':       { on: 'input', run: () => drawLogoCrop() },
+  'logo.nudge':      { run: (e, t) => nudgeLogoCrop(+t.dataset.dx, +t.dataset.dy) },
+  'logo.cancel':     { run: () => closeLogoCrop() },
+  'logo.save':       { run: () => saveLogoCrop() },
   // Custom keys are allowed by decision. This only flags obviously guessable
   // ones as you type; it never blocks.
   'team.key-typed':  { on: 'input',  run: () => liveKeyWarning() },

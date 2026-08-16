@@ -568,6 +568,46 @@ window.LUMTEST = (function () {
         return S.stints[0].damage === false || 'damage stayed set with no repair time';
       });
 
+      // ---- TEAM NAME + PASSWORD --------------------------------------------
+      // NOTE: deriveTeamKey() is async (SubtleCrypto) and this runner is
+      // synchronous, so the derivation itself is verified in the sync suite
+      // rather than faked with a placeholder here. What IS checked here is that
+      // the name+password path is wired up and the raw-key path still exists.
+      check('team joins by name + password, with key entry kept as a fallback', () => {
+        if (!$('#team-name-input') || !$('#team-pass-input')) return 'name/password fields missing';
+        if (typeof deriveTeamKey !== 'function') return 'deriveTeamKey missing';
+        if (typeof liveJoinByNamePassword !== 'function') return 'join handler missing';
+        // The raw key route has to survive: invite links and existing teams use it.
+        return !!$('#live-key-input') || 'advanced key entry was removed, which strands existing teams';
+      });
+      check('logo encoder always finds a size that fits', () => {
+        // The first version simply refused an image, telling Michael it was
+        // "too detailed" with nothing he could do. The encoder must step down
+        // until it fits rather than give up.
+        const big = document.createElement('canvas');
+        big.width = big.height = 1400;
+        const bx = big.getContext('2d');
+        for (let i = 0; i < 6000; i++) {
+          bx.fillStyle = 'hsl(' + (i % 360) + ',90%,' + (30 + i % 50) + '%)';
+          bx.fillRect(Math.random() * 1400, Math.random() * 1400, 14, 14);
+        }
+        const out = encodeWithinBudget(big);
+        if (!out) return 'a noisy image was still refused';
+        return out.length <= TEAM_LOGO_BUDGET || 'encoded ' + out.length + ' over budget';
+      });
+      check('logo crop dialog exists and is square', () => {
+        const c = $('#logo-crop-canvas');
+        return (c && c.width === c.height) || 'crop canvas missing or not square';
+      });
+      check('safe areas: modals clear the Dynamic Island', () => {
+        // The dialog title was painting under the clock on an iPhone.
+        const css = [...document.styleSheets].some(s => {
+          try { return [...s.cssRules].some(r => /mtitle/.test(r.cssText || '') && /safe-area-inset-top/.test(r.cssText || '')); }
+          catch (e) { return false; }
+        });
+        return css || 'no safe-area inset on modal titles';
+      });
+
       // ---- COLLAPSIBLE SECTIONS --------------------------------------------
       const collapsed = id => {
         const c = document.querySelector('[data-collapse="' + id + '"]');

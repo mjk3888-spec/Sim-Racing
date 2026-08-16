@@ -219,3 +219,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 .collapse-summary.warn{color:var(--yellow);}
 /* A collapsed card should read as a single tidy line, not a card with a gap. */
 [data-collapse].is-collapsed>.sec-head{margin-bottom:0;border-bottom:none;padding-bottom:0;}
+
+.team-adv{font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted);
+  cursor:pointer;text-transform:none;padding:var(--sp-2) 0;}
+#logo-crop-canvas{background:var(--bg);}

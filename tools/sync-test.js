@@ -49,6 +49,22 @@ window.SYNCTEST = (function () {
 
         ok('two clients connect', a.readyState === 1 && b.readyState === 1, 'readyState');
 
+        // Team key derivation. Async, so it lives here rather than in the
+        // synchronous app suite. Michael's framing: people understand a team
+        // name and a password, not a "key". The key is derived from both.
+        if (typeof deriveTeamKey === 'function') {
+          const k1 = await deriveTeamKey('Wildthings Racing', 'hotlap99');
+          const k2 = await deriveTeamKey('wildthings racing', 'hotlap99');
+          const k3 = await deriveTeamKey('Wildthings Racing', 'other');
+          ok('same name+password always gives the same key', k1 === k2, k1 + ' vs ' + k2);
+          ok('a different password gives a different key', k1 !== k3, 'collision');
+          ok('derived key matches the server key format', /^[a-z0-9-]{8,64}$/.test(k1), k1);
+          // This is what makes a memorable team name safe: the name is not
+          // recoverable from the key, so guessing the name gets you nowhere.
+          ok('the team name is not guessable from the key',
+            k1.indexOf('wildthings') < 0 && k1.indexOf('racing') < 0, k1);
+        }
+
         // 1. A change on one device reaches the other with nobody asking for it.
         //    This is the whole point of the phase.
         a.send(JSON.stringify({ type: 'patch', path: 'config.track', value: 'Spa', ts: t0 }));

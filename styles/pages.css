@@ -240,3 +240,40 @@ body{padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-i
   .time-pair select{min-width:0;flex:1 1 0;}
   .time-pair .tsep{flex:0 0 auto;}
 }
+
+/* ============================================================================
+   SAFE AREAS: DYNAMIC ISLAND AND NOTCH
+   ----------------------------------------------------------------------------
+   Full-screen modals were painting their sticky title straight under the
+   Dynamic Island, so "TEAM SYNC" sat behind the clock. The header strip already
+   had a top inset; the modals never did.
+
+   env(safe-area-inset-top) resolves to 0 in a normal browser tab, so this costs
+   nothing off-device.
+   ========================================================================== */
+@media(max-width:768px){
+  .modal>.mtitle{padding-top:calc(16px + env(safe-area-inset-top,0px));}
+  .modal>.mfoot{padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));}
+  .overlay{padding:0;}
+  #join-banner{padding-left:calc(var(--sp-4) + env(safe-area-inset-left,0px));
+               padding-right:calc(var(--sp-4) + env(safe-area-inset-right,0px));}
+}
+
+/* ============================================================================
+   HEADER: THE SYNC BLOCK WAS EATING THE TOP BAR
+   ----------------------------------------------------------------------------
+   Sync status is a thing you glance at, not a thing you read. It had a label, a
+   dot, a status word and a timestamp, taking a whole column of a header whose
+   real job is the event name and the driver countdowns. It is now a dot and one
+   short word, and the timestamp is gone: the dot already says whether it is
+   working, and the detail is one tap away in the dialog.
+   ========================================================================== */
+#sync-time{display:none;}
+.s-sync-block{min-width:0!important;flex:0 0 auto;padding:6px 10px!important;}
+.s-sync-block .s-label{margin-bottom:2px;}
+#sync-status{font-size:var(--fs-xs)!important;}
+@media(max-width:480px){
+  /* On a phone the word goes too; the dot carries it. */
+  #sync-status{display:none;}
+  .s-sync-block{padding:6px 8px!important;}
+}

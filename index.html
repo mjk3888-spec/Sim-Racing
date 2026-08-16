@@ -102,7 +102,7 @@
         </div>
       </div>
     </div>
-    <div class="s-block" style="min-width:104px;cursor:pointer;border-left:1px solid var(--border);" data-action="team.open">
+    <div class="s-block s-sync-block" style="cursor:pointer;border-left:1px solid var(--border);" data-action="team.open">
       <div class="s-label">Sync ▾</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
         <span class="s-sync-dot" id="sync-dot" style="background:var(--muted)"></span>
@@ -555,20 +555,24 @@
   <div class="mtitle">Team Sync</div>
 
   <div id="team-setup-disconnected">
-    <div class="team-lead">This device is not connected to a team yet. Everything you type here stays on this device until it is.</div>
+    <div class="team-lead">Everything you type stays on this device until you connect. Everyone on the team uses the <strong>same name and password</strong>.</div>
     <div class="team-step">
-      <div class="team-step-n">First device?</div>
-      <button class="btn pk" style="width:100%;justify-content:center;padding:14px" data-action="live.new">Start a new team</button>
-      <div class="team-hint">Creates your team and connects this device.</div>
+      <div class="field"><label>Team Name</label>
+        <input id="team-name-input" style="text-transform:none" placeholder="Wildthings Racing" maxlength="60" data-action="team.name" autocomplete="off"></div>
+      <div class="field"><label>Team Password</label>
+        <input type="password" id="team-pass-input" style="text-transform:none" placeholder="something your team knows" autocomplete="off"></div>
+      <button class="btn gn" style="width:100%;justify-content:center;padding:14px" data-action="team.join">Connect</button>
+      <div class="team-hint">First person to connect creates the team. Everyone after that joins it. Or just tap an invite link and skip the typing entirely.</div>
     </div>
-    <div class="team-or">or</div>
-    <div class="team-step">
-      <div class="team-step-n">Joining a team that already exists?</div>
-      <input id="live-key-input" style="text-transform:none;width:100%" placeholder="wtr-daytona-2026" autocomplete="off" spellcheck="false" data-action="team.key-typed">
+    <details style="margin-top:12px">
+      <summary class="team-adv">Advanced: use a team key instead</summary>
+      <input id="live-key-input" style="text-transform:none;width:100%;margin-top:8px" placeholder="team key" autocomplete="off" spellcheck="false" data-action="team.key-typed">
       <div id="live-key-warn" style="display:none"></div>
-      <button class="btn gn" style="width:100%;justify-content:center;padding:14px;margin-top:8px" data-action="live.connect">Join this team</button>
-      <div class="team-hint">Spaces and capitals are fine, we tidy them up. Easiest way is to tap the invite link a teammate sends you.</div>
-    </div>
+      <div class="brow" style="gap:8px;margin-top:8px">
+        <button class="btn" data-action="live.connect">Join with key</button>
+        <button class="btn" data-action="live.new">Generate a random key</button>
+      </div>
+    </details>
   </div>
 
   <div id="team-setup-connected" style="display:none">
@@ -584,8 +588,6 @@
 
   <hr>
   <div class="team-step-n">Team identity (shared with everyone)</div>
-  <div class="field"><label>Team Name</label>
-    <input id="team-name-input" style="text-transform:none" placeholder="Wildthings Racing" maxlength="60" data-action="team.name" autocomplete="off"></div>
   <div class="field"><label>Team Logo (optional)</label>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <div id="team-logo-preview" style="min-height:44px;display:flex;align-items:center"></div>
@@ -597,6 +599,24 @@
   <div id="live-log" style="font-family:var(--mono);font-size:var(--fs-xs);color:var(--muted);margin-top:10px;white-space:pre-wrap;text-transform:none;max-height:90px;overflow:auto"></div>
 
   <div class="mfoot"><button class="btn" data-action="team.close">Close</button></div>
+</div></div>
+
+<div class="overlay" id="logo-crop-overlay"><div class="modal" style="width:360px">
+  <div class="mtitle">Crop Your Logo</div>
+  <div style="font-family:var(--mono);font-size:var(--fs-sm);color:var(--text-mid);text-transform:none;margin-bottom:12px;line-height:1.5">A logo needs to be square. Zoom and nudge until it looks right.</div>
+  <canvas id="logo-crop-canvas" width="260" height="260" style="width:100%;max-width:260px;display:block;margin:0 auto;border:1px solid var(--border-bright);border-radius:var(--radius)"></canvas>
+  <div class="field" style="margin-top:14px"><label>Zoom</label>
+    <input type="range" id="logo-crop-zoom" min="1" max="4" step="0.05" value="1" data-action="logo.zoom" style="width:100%"></div>
+  <div class="brow" style="gap:6px;justify-content:center">
+    <button class="btn" data-action="logo.nudge" data-dx="-1" data-dy="0">←</button>
+    <button class="btn" data-action="logo.nudge" data-dx="0" data-dy="-1">↑</button>
+    <button class="btn" data-action="logo.nudge" data-dx="0" data-dy="1">↓</button>
+    <button class="btn" data-action="logo.nudge" data-dx="1" data-dy="0">→</button>
+  </div>
+  <div class="mfoot">
+    <button class="btn" data-action="logo.cancel">Cancel</button>
+    <button class="btn pk" data-action="logo.save">Use This Logo</button>
+  </div>
 </div></div>
 
 <div class="overlay" id="entries-overlay"><div class="modal" style="width:460px">
