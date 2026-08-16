@@ -16,7 +16,7 @@ const DEFAULT_CHECKS={pre:[{id:'p1',text:'Setup file loaded and saved',done:fals
    old service worker cache long after a deploy, and "is my phone up to date?"
    is otherwise unanswerable without devtools.
    BUMP THIS TOGETHER WITH CACHE_VERSION IN sw.js ON EVERY RELEASE. */
-const APP_BUILD='2026-08-16.6';
+const APP_BUILD='2026-08-16.7';
 function showBuildStamp(){const e=el('build-stamp');if(e)e.textContent=APP_BUILD;}
 
 const DRV_COLORS=['#DFFF00','#8EC7E6','#FF8A1C','#39FF14','#C060E8','#FF6030'];

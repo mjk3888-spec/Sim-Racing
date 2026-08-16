@@ -25,13 +25,24 @@ initDelegation();loadState();liveInit();
    the clocks and countdowns are what he opens the app for, and being dropped
    on Config because that is where he left it costs a tap when it matters. */
 pg('ops');
-/* Hold the branded splash a beat, then fade it out. Safari decides how long the
-   native iOS startup image shows and it cannot be configured; this overlay can.
-   Removed from the DOM afterwards so it leaves nothing behind. */
+/* Hold the branded splash, then fade it out. Safari decides how long the native
+   iOS startup image shows and that cannot be configured; this overlay can.
+
+   The fade is started from inside a double requestAnimationFrame rather than
+   directly from the timer. The timer can fire while the main thread is still
+   busy finishing boot work, and a transition started on a blocked thread drops
+   its first frames and looks like a stutter. Waiting for two clean frames means
+   the transition begins only once the browser is actually painting smoothly.
+
+   Timing is mirrored in the #boot-splash rules in styles/components.css. */
 setTimeout(function(){
   var b=el('boot-splash');
   if(!b)return;
-  b.classList.add('gone');
-  setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},500);
-},1100);
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      b.classList.add('gone');
+      setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},850);
+    });
+  });
+},1500);
 setInterval(updateDash,5000);

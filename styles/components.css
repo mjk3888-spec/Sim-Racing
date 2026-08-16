@@ -128,15 +128,46 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
   text-transform:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .entry-live{font-family:var(--mono);font-size:0.62rem;margin-top:4px;text-transform:none;}
 
-/* BOOT SPLASH. Purely visual: pointer-events stays none for its whole life so
-   it can never intercept a tap, even if a script error prevented its removal. */
-#boot-splash{position:fixed;inset:0;z-index:9999;background:var(--bg);
-  display:flex;align-items:center;justify-content:center;pointer-events:none;
-  opacity:1;transition:opacity .45s ease-out;}
+
+/* ============================================================================
+   BOOT SPLASH
+   ----------------------------------------------------------------------------
+   OPACITY ONLY. The first version also animated transform:scale on the logo,
+   which forces the browser to re-rasterize the SVG on every frame. That happens
+   during boot, while loadState() is synchronously rendering all six tabs and
+   blocking the main thread, so the animation and the boot work fight each other
+   and the result judders. Opacity alone is handled by the compositor and does
+   not touch the main thread, so it stays smooth even while the app is busy.
+
+   will-change and translateZ promote both elements to their own layers up
+   front, so the browser is not creating a layer mid-animation.
+
+   pointer-events stays none for its whole life: if a script error ever stopped
+   the splash being removed, it must degrade to a harmless visual, never an
+   invisible sheet blocking every tap.
+
+   Timing (matched in js/main.js): fade in 600ms from 60ms, hold, fade out 800ms
+   starting at 1500ms, removed at 2300ms.
+   ========================================================================== */
+#boot-splash{
+  position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:1;
+  transition:opacity 800ms cubic-bezier(.33,0,.2,1);
+  will-change:opacity;transform:translateZ(0);backface-visibility:hidden;
+}
 #boot-splash.gone{opacity:0;}
-#boot-splash img{width:min(46vw,230px);height:auto;
-  animation:splash-in .55s ease-out both;}
-@keyframes splash-in{
-  from{opacity:0;transform:scale(0.94);}
-  to{opacity:1;transform:scale(1);}
+#boot-splash img{
+  width:min(54vw,270px);height:auto;
+  opacity:0;
+  animation:splash-fade-in 600ms cubic-bezier(.33,0,.2,1) 60ms forwards;
+  will-change:opacity;transform:translateZ(0);
+}
+@keyframes splash-fade-in{to{opacity:1;}}
+
+/* Someone who has asked the system to reduce motion gets the logo with no
+   animation at all rather than a shortened one. */
+@media(prefers-reduced-motion:reduce){
+  #boot-splash{transition-duration:1ms;}
+  #boot-splash img{animation:none;opacity:1;}
 }
