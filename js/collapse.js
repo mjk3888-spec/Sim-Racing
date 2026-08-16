@@ -36,9 +36,19 @@ function saveCollapsed(m) {
 
 /* Collapsed state is per device, not synced. Whether a panel is folded up on
    Michael's phone has nothing to do with what his teammates want to see. */
+/* A section can declare data-collapse-default="closed" to start folded. That is
+   how the specialist tools stay present but out of the way for teams that never
+   touch them, which is exactly what Michael asked for: keep everything, hide it
+   cleanly from those who do not need it. A stored choice always wins over the
+   default, so folding one open makes it stay open. */
+function defaultsClosed(id) {
+  const card = document.querySelector('[data-collapse="' + id + '"]');
+  return !!(card && card.getAttribute('data-collapse-default') === 'closed');
+}
 function isCollapsed(id) {
   const m = loadCollapsed();
-  return !!(m[id] && m[id].c);
+  if (!m[id]) return defaultsClosed(id);
+  return !!m[id].c;
 }
 function userHasChosen(id) {
   const m = loadCollapsed();

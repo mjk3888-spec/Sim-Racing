@@ -50,12 +50,12 @@ window.V2TEST = (function () {
       // ---- NAVIGATION. The test that would have caught bug 3 ------------
       check('every bottom-nav item reaches its own screen', () => {
         const bad = [];
-        ['race', 'plan', 'team'].forEach(name => {
+        ["pit", "strategy", "team"].forEach(name => {
           const btn = document.querySelector('#v2-nav button[data-v2="' + name + '"]');
           if (!btn) { bad.push(name + ':no button'); return; }
           click(btn);
           const active = $('.v2-screen.on');
-          if (!active || active.id !== 'screen-' + name) {
+          if (!active || active.id !== "screen-" + name) {
             bad.push(name + ' -> ' + (active ? active.id : 'nothing'));
           }
         });
@@ -69,23 +69,24 @@ window.V2TEST = (function () {
         const clash = navNames.filter(n => headNames.indexOf(n) >= 0);
         return clash.length === 0 || 'shared identifier: ' + clash.join(', ');
       });
-      check('closing a sheet leaves the screen underneath usable', () => {
+      check('closing the sync dialog leaves the screen underneath usable', () => {
         click(document.querySelector('#v2-nav button[data-v2="team"]'));
         click($('#v2-sync'));
-        if (!$('#sheet-team').classList.contains('on')) return 'sync sheet did not open';
-        click($('#sheet-team [data-v2="close"]'));
-        if ($('#sheet-team').classList.contains('on')) return 'sheet did not close';
-        return shown('#screen-team') || 'Team screen not visible after closing the sheet';
+        if (!$('#team-overlay').classList.contains('on')) return 'sync dialog did not open';
+        click($('#team-overlay [data-action="team.close"]'));
+        if ($('#team-overlay').classList.contains('on')) return 'dialog did not close';
+        return shown('#screen-team') || 'Team screen not visible after closing the dialog';
       });
 
-      // ---- RACE ----------------------------------------------------------
-      click(document.querySelector('#v2-nav button[data-v2="race"]'));
+      // ---- PIT WALL ------------------------------------------------------
+      click(document.querySelector("#v2-nav button[data-v2='pit']"));
       check('quick log adds an entry and it can be removed again', () => {
+        // Uses v1's actions and v1's status log, so this covers both versions.
         const before = S.raceLog.length;
-        click($('[data-v2act="log"][data-type="pit-in"]'));
+        click($('[data-action="log.quick"][data-type="pit-in"]'));
         if (S.raceLog.length !== before + 1) return 'log did not add';
-        const del = $('.feed-del');
-        if (!del) return 'no delete control on the feed';
+        const del = $('#race-status-log [data-action="log.delete"]');
+        if (!del) return 'no delete control on the race log';
         click(del);
         return S.raceLog.length === before || 'delete did not remove it';
       });
@@ -111,16 +112,17 @@ window.V2TEST = (function () {
 
       // ---- TYPING. The test that would have caught bug 2 -----------------
       await (async () => {
-        const key = LIVE_KEY;
-        if (key) { try { liveDisconnect(); } catch (e) {} }
+        if (LIVE_KEY) { try { liveDisconnect(); } catch (e) {} }
         click($('#v2-sync'));
-        renderTeamSheet();
-        const inp = $('#v2-tn');
-        if (!inp) { results.push({ name: 'a focused input survives the one-second re-render', pass: false, detail: 'team name field missing' }); return; }
+        const inp = $('#team-name-input');
+        if (!inp) {
+          results.push({ name: 'a focused input survives the one-second re-render', pass: false, detail: 'team name field missing' });
+          return;
+        }
         inp.focus();
         inp.value = 'Wildthings';
         await wait(2400);            // spans at least two render ticks
-        const still = $('#v2-tn');
+        const still = $('#team-name-input');
         const ok = still === inp && document.activeElement === still && still.value === 'Wildthings';
         results.push({
           name: 'a focused input survives the one-second re-render',
@@ -128,13 +130,69 @@ window.V2TEST = (function () {
           detail: ok ? '' : 'element replaced or focus lost, which closes the keyboard on iOS'
         });
         still.blur();
-        click($('#sheet-team [data-v2="close"]'));
+        click($('#team-overlay [data-action="team.close"]'));
       })();
+
+      // ---- FULL FUNCTIONALITY: v1 components inside v2 -------------------
+      check("Strategy carries the schedule, optimiser and every calculator", () => {
+        click(document.querySelector("#v2-nav button[data-v2='strategy']"));
+        const missing = [];
+        if (!document.querySelectorAll("#plan-list .stint").length) missing.push("stint cards");
+        if (!$("#opt-mode")) missing.push("optimiser");
+        if (!$("#fc-results")) missing.push("fuel calculator");
+        if (!$("#cmp-results")) missing.push("pace vs fuel-save");
+        if (!$("#ps-results")) missing.push("pit stop estimator");
+        if (!$("#avwrap")) missing.push("availability");
+        if (!$("#sch-quali-driver")) missing.push("race start");
+        return missing.length === 0 || "missing: " + missing.join(", ");
+      });
+      check("Team carries drivers, event, checklists, goals, notes and archive", () => {
+        click(document.querySelector("#v2-nav button[data-v2='team']"));
+        const missing = [];
+        if (!$("#drv-list")) missing.push("driver list");
+        if (!$("#cfg-name")) missing.push("event config");
+        if (!$("#cfg-car-pick")) missing.push("car picker");
+        if (!$("#cl-pre")) missing.push("checklists");
+        if (!$("#goals-list")) missing.push("goals");
+        if (!$("#tnotes-list")) missing.push("testing notes");
+        if (!$("#settings-tbody")) missing.push("car settings");
+        if (!$("#archive-list")) missing.push("archive");
+        if (!$("#prereq-list")) missing.push("prerequisites");
+        return missing.length === 0 || "missing: " + missing.join(", ");
+      });
+      check("v1 components actually RENDER, not just exist", () => {
+        const empty = [];
+        if (!document.querySelectorAll("#drv-list .dcard").length) empty.push("drivers");
+        if (!document.querySelectorAll("#cl-pre .check-item").length) empty.push("checklists");
+        if (!document.querySelectorAll("#prereq-list .prereq-item").length) empty.push("prereqs");
+        if (!document.querySelectorAll("#cfg-car-pick option").length) empty.push("car options");
+        return empty.length === 0 || "rendered empty: " + empty.join(", ");
+      });
+      check("the driver editor opens with v1 logic", () => {
+        click($("[data-action='driver.add']"));
+        const open = $("#drv-overlay").classList.contains("on");
+        const blank = $("#dm-name").value === "";
+        click($("[data-action='driver.close']"));
+        return (open && blank) || "driver editor did not open blank";
+      });
+      check("specialist sections start folded, not in the way", () => {
+        const folded = ["v2-opt", "v2-cmp", "v2-pit", "v2-avail", "v2-tnotes", "v2-settings"]
+          .filter(id => {
+            const c = document.querySelector("[data-collapse='" + id + "']");
+            return c && !c.classList.contains("is-collapsed");
+          });
+        return folded.length === 0 || "expanded by default: " + folded.join(", ");
+      });
+      check("boot completes: clock running and splash lifted", () => {
+        if ($("#build-stamp").textContent === "2014") return "boot aborted before the build stamp";
+        const sp = $("#v2-splash");
+        return (!sp || sp.classList.contains("gone")) || "splash never lifted";
+      });
 
       // ---- BRAND ----------------------------------------------------------
       check('each screen carries its brand accent', () => {
         // Blue = Racing, Yellow = Engineering, Orange = Performance.
-        const want = { race: '142, 199, 230', plan: '255, 138, 28', team: '223, 255, 0' };
+        const want = { pit: "142, 199, 230", strategy: "255, 138, 28", team: "223, 255, 0" };
         const bad = [];
         Object.keys(want).forEach(name => {
           click(document.querySelector('#v2-nav button[data-v2="' + name + '"]'));
@@ -142,8 +200,8 @@ window.V2TEST = (function () {
           const c = getComputedStyle(btn).color.replace(/rgba?\(|\)/g, '');
           if (c.indexOf(want[name]) < 0) bad.push(name + ' is ' + c);
         });
-        click(document.querySelector('#v2-nav button[data-v2="race"]'));
-        return bad.length === 0 || bad.join('; ');
+        click(document.querySelector("#v2-nav button[data-v2='pit']"));
+        return bad.length === 0 || bad.join("; ");
       });
 
       // ---- SHARED ENGINE --------------------------------------------------

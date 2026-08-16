@@ -267,14 +267,14 @@ button.wide.ghost{background:var(--s2);color:var(--tx2);}
 }
 
 /* Each screen tints its own section headings and active nav item. */
-#screen-race  .sect-title{color:var(--racing);}
-#screen-plan  .sect-title{color:var(--performance);}
+#screen-pit .sect-title{color:var(--racing);}
+#screen-strategy .sect-title{color:var(--performance);}
 #screen-team  .sect-title{color:var(--engineering);}
 
-#v2-nav button[data-v2="race"].on{color:var(--racing);}
-#v2-nav button[data-v2="race"].on::before{background:var(--racing);}
-#v2-nav button[data-v2="plan"].on{color:var(--performance);}
-#v2-nav button[data-v2="plan"].on::before{background:var(--performance);}
+#v2-nav button[data-v2="pit"].on{color:var(--racing);}
+#v2-nav button[data-v2="pit"].on::before{background:var(--racing);}
+#v2-nav button[data-v2="strategy"].on{color:var(--performance);}
+#v2-nav button[data-v2="strategy"].on::before{background:var(--performance);}
 #v2-nav button[data-v2="team"].on{color:var(--engineering);}
 #v2-nav button[data-v2="team"].on::before{background:var(--engineering);}
 

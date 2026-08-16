@@ -37,14 +37,21 @@ pg('ops');
    the transition begins only once the browser is actually painting smoothly.
 
    Timing is mirrored in the #boot-splash rules in styles/components.css. */
-setTimeout(function(){
+/* rAF does NOT fire in a backgrounded or non-painting tab, so relying on it
+   alone can leave the splash stuck at full opacity forever, which reads as a
+   permanently broken app. The double rAF keeps the fade smooth when the browser
+   is painting; the plain timeout guarantees it lifts when it is not. */
+var _splashLifted=false;
+function _liftSplash(){
+  if(_splashLifted)return;
+  _splashLifted=true;
   var b=el('boot-splash');
   if(!b)return;
-  requestAnimationFrame(function(){
-    requestAnimationFrame(function(){
-      b.classList.add('gone');
-      setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},850);
-    });
-  });
+  b.classList.add('gone');
+  setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},850);
+}
+setTimeout(function(){
+  requestAnimationFrame(function(){requestAnimationFrame(_liftSplash);});
+  setTimeout(_liftSplash,400);
 },1500);
 setInterval(updateDash,5000);

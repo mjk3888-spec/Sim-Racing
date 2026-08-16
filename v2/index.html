@@ -3,49 +3,47 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>LUMINARY v2</title>
+<title>LUMINARY</title>
 <meta name="theme-color" content="#050505">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Luminary 2">
+<meta name="apple-mobile-web-app-title" content="Luminary">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icons/6.11.0/css/flag-icons.min.css">
 <link rel="stylesheet" href="v2.css">
+<link rel="stylesheet" href="components.css">
 </head>
 <body>
 
 <!--
-  LUMINARY v2 — a second opinion on the same app.
+  LUMINARY v2 — every function v1 has, arranged the way v2 arranges things.
 
-  WHAT I KEPT: every core function, the Luminary mark, volt as the identity,
-  the same live sync backend and the same data. Both versions read and write the
-  same team, so you can run them side by side on two devices and watch them
-  agree.
+  THE ARCHITECTURE THAT MADE THIS CHEAP
+  v1's logic is keyed to element IDs and data-action attributes. So this page
+  uses V1'S COMPONENT MARKUP inside V2'S LAYOUT: the same ids, the same actions,
+  the same delegated dispatcher. Every function v1 has therefore works here
+  unchanged and stays covered by v1's 72 tests. v2.css restyles that shared
+  vocabulary in v2's visual language. Only the Pit Wall screen and the
+  navigation are genuinely new code.
 
-  WHAT I CHANGED, AND WHY:
+  THREE DESTINATIONS, RENAMED
+  Race/Plan/Team were placeholders. These are what they actually are:
 
-  1. ORGANISED BY WHEN, NOT BY WHAT. v1 has six tabs, one per feature area. But
-     during a stint you only ever need four answers: who is in the car, how long
-     until the swap, what position are we, are we on fuel. Everything else is
-     preparation you did hours ago. So v2 has three places instead of six:
-     RACE is the live screen, PLAN is the schedule and strategy, TEAM is setup.
+    PIT WALL — where a strategist sits during a race. Live, and nothing else.
+    STRATEGY — the schedule and every number that feeds it.
+    TEAM     — people, the event, and everything you set up once.
 
-  2. THE RACE SCREEN IS THE PRODUCT. One screen, no scrolling for the essentials,
-     numbers large enough to read from a rig at arm's length. v1 makes you scroll
-     past Fair Share and a stat grid to reach the countdown, which is the single
-     most important number in the app.
+  BRAND COLOUR CARRIES MEANING
+  Blue = Racing, Yellow = Engineering, Orange = Performance. Pit Wall is blue,
+  Strategy is orange, Team is yellow. The colour tells you where you are before
+  you read a word.
 
-  3. NAVIGATION AT THE BOTTOM. You hold a phone at the bottom. v1's tabs are at
-     the top, which on a modern iPhone is the hardest place to reach one-handed.
-
-  4. FEWER LINES. v1 draws a border around almost everything, so nothing stands
-     out. v2 uses background steps and space for grouping and saves outlines for
-     things that genuinely need attention.
-
-  5. ONE ACCENT. Volt means "this matters". Green and red mean good and bad.
-     Nothing else gets a colour, so the colours that remain actually carry
-     meaning.
+  SPECIALIST FEATURES ARE PRESENT BUT FOLDED AWAY
+  Michael's brief: keep everything, including the parts only some teams use, and
+  hide it cleanly from those who don't. Anything past the common path sits in a
+  collapsed section.
 -->
 
 <div id="v2-splash"><img src="../assets/logo.svg" alt=""></div>
@@ -53,34 +51,38 @@
 <header id="v2-head">
   <img id="v2-logo" src="../assets/logo.svg" alt="Luminary">
   <button id="v2-entry" data-v2="entries">
-    <span class="lbl">Entry</span>
-    <span class="val" id="v2-entry-name">No Event</span>
+    <span class="lbl">Entry <span id="entry-count"></span></span>
+    <span class="val" id="s-event">No Event</span>
   </button>
   <button id="v2-sync" data-v2="team-sync" title="Team sync">
     <span class="dot" id="v2-sync-dot"></span>
   </button>
 </header>
 
+<div id="join-banner" style="display:none">
+  <div><strong>Not connected to a team.</strong>
+  <span>This copy keeps its data to itself until you connect it.</span></div>
+  <button class="btn gn" data-v2="team-sync">Connect</button>
+</div>
+
 <main id="v2-main">
 
-  <!-- ============ RACE ============ -->
-  <section class="v2-screen on" id="screen-race">
-    <div class="hero" id="hero-block">
+  <!-- ==================== PIT WALL ==================== -->
+  <section class="v2-screen on" id="screen-pit">
+    <div class="hero">
       <div class="hero-label" id="hero-label">No active stint</div>
       <div class="hero-time" id="hero-time">—</div>
       <div class="hero-sub" id="hero-sub">Set up an event to begin</div>
     </div>
 
-    <div class="swap" id="swap-block">
+    <div class="swap">
       <div class="swap-side">
-        <div class="k">In car</div>
-        <div class="v" id="race-cur">—</div>
+        <div class="k">In car</div><div class="v" id="race-cur">—</div>
         <div class="s" id="race-cur-sub"></div>
       </div>
       <div class="swap-arrow">→</div>
       <div class="swap-side">
-        <div class="k">Next</div>
-        <div class="v" id="race-next">—</div>
+        <div class="k">Next</div><div class="v" id="race-next">—</div>
         <div class="s" id="race-next-sub"></div>
       </div>
     </div>
@@ -93,67 +95,274 @@
     </div>
 
     <div class="quick">
-      <button class="qbtn" data-v2act="log" data-type="pit-in">Pit In</button>
-      <button class="qbtn" data-v2act="log" data-type="pit-out">Pit Out</button>
-      <button class="qbtn danger" data-v2act="log" data-type="contact">Contact</button>
+      <button class="qbtn" data-action="log.quick" data-type="pit-in">Pit In</button>
+      <button class="qbtn" data-action="log.quick" data-type="pit-out">Pit Out</button>
+      <button class="qbtn danger" data-action="log.quick" data-type="contact">Contact</button>
     </div>
 
-    <div class="feed" id="race-feed"></div>
+    <div class="sect-title">Race log</div>
+    <div id="race-status-log"></div>
+
+    <div class="v2-card" id="fs-card" data-collapse="v2-fairshare" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-fairshare">Fair Share<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body"><div id="fs-content"></div></div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-pie" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-pie">Drive Time Split<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+          <canvas id="drive-pie" width="160" height="160" style="flex-shrink:0"></canvas>
+          <div id="drive-pie-legend" style="flex:1;min-width:120px"></div>
+        </div>
+      </div>
+    </div>
+    <div id="drv-stints" style="display:none"></div>
+    <div id="sched-status-alert" style="display:none"></div>
+    <div id="goals-dash-list" style="display:none"></div>
+    <div id="goals-dash-status" style="display:none"></div>
   </section>
 
-  <!-- ============ PLAN ============ -->
-  <section class="v2-screen" id="screen-plan">
+  <!-- ==================== STRATEGY ==================== -->
+  <section class="v2-screen" id="screen-strategy">
     <div class="sect-title">Stint Schedule</div>
     <div id="plan-list" class="plan-list"></div>
-    <div class="sect-title">Fuel</div>
-    <div class="panel">
-      <div class="frow">
-        <label>Fuel now (L)<input type="number" inputmode="decimal" id="v2-fc-fuel" data-v2act="fuel"></label>
-        <label>Burn / lap (L)<input type="number" inputmode="decimal" id="v2-fc-burn" data-v2act="fuel"></label>
-        <label>Lap time<input inputmode="decimal" id="v2-fc-lap" placeholder="2:18.5" data-v2act="fuel"></label>
+
+    <div class="v2-card" data-collapse="v2-quali" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-quali">Race Start<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="field"><label>Qualifying driver</label>
+          <select id="sch-quali-driver" data-action="sched.meta-driver"><option value="">— Select —</option></select></div>
+        <div class="field"><label>Starting position</label>
+          <input id="sch-quali-pos" inputmode="numeric" data-action="sched.meta-pos"></div>
+        <div class="field"><label>Notes</label>
+          <input id="sch-quali-notes" data-action="sched.meta-notes"></div>
       </div>
-      <div id="v2-fc-out" class="fuel-out">Enter all three.</div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-opt" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-opt">Stint Optimiser<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="field"><label>Optimise for</label>
+          <select id="opt-mode">
+            <option value="race-pace">Race pace</option>
+            <option value="efficiency">Best efficiency</option>
+            <option value="fuel-economy">Best fuel economy</option>
+            <option value="even-time">Even drive time</option>
+          </select></div>
+        <div class="brow">
+          <button class="btn pk" data-action="opt.run" data-scope="all">Optimise all</button>
+          <button class="btn" data-action="opt.run" data-scope="unassigned">Fill gaps only</button>
+        </div>
+        <div id="opt-result" class="opt-result"></div>
+      </div>
+    </div>
+
+    <div class="sect-title">Fuel</div>
+    <div class="v2-card">
+      <div class="frow3">
+        <div class="field"><label>Fuel now (L)</label><input type="number" id="fc-fuel" step="0.1" inputmode="decimal" data-action="fuel.calc"></div>
+        <div class="field"><label>Burn / lap (L)</label><input type="number" id="fc-burn" step="0.01" inputmode="decimal" data-action="fuel.calc"></div>
+        <div class="field"><label>Avg lap</label><input id="fc-lap" inputmode="decimal" placeholder="2:18.5" data-action="fuel.lap"></div>
+      </div>
+      <div id="fc-results" class="calc-out">Enter all three.</div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-cmp" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-cmp">Race Pace vs Fuel Save<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="frow3">
+          <div class="field"><label>Time remaining</label><input id="cmp-remain" inputmode="decimal" placeholder="6:00" data-action="cmp.calc"></div>
+          <div class="field"><label>Race lap</label><input id="cmp-lap" inputmode="decimal" placeholder="1:31.7" data-action="cmp.lap"></div>
+          <div class="field"><label>Race burn / lap</label><input type="number" id="cmp-burn" step="0.01" inputmode="decimal" data-action="cmp.calc"></div>
+        </div>
+        <div class="frow3">
+          <div class="field"><label>FS lap</label><input id="cmp-fslap" inputmode="decimal" placeholder="1:32.2" data-action="cmp.lap"></div>
+          <div class="field"><label>FS burn / lap</label><input type="number" id="cmp-fsburn" step="0.01" inputmode="decimal" data-action="cmp.calc"></div>
+          <div class="field"><label>Usable fuel / stint</label><input type="number" id="cmp-usable" step="1" inputmode="numeric" data-action="cmp.calc"></div>
+        </div>
+        <div class="brow"><button class="btn bl" data-action="cmp.prefill">Pull from event data</button></div>
+        <div id="cmp-results" class="calc-out"></div>
+      </div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-pit" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-pit">Pit Stop Estimator<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="sub-head">Calibration — pit entry to pit exit</div>
+        <div class="frow">
+          <div class="field"><label>Full stop, full fuel (sec)</label><input type="number" id="ps-full-fuel" step="0.1" inputmode="decimal" data-action="pit.calc"></div>
+          <div class="field"><label>Half stop, half fuel (sec)</label><input type="number" id="ps-half-fuel" step="0.1" inputmode="decimal" data-action="pit.calc"></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Full + 2 tyres (sec)</label><input type="number" id="ps-2tire" step="0.1" inputmode="decimal" data-action="pit.calc"></div>
+          <div class="field"><label>Full + 4 tyres (sec)</label><input type="number" id="ps-4tire" step="0.1" inputmode="decimal" data-action="pit.calc"></div>
+        </div>
+        <div class="sub-head">This stop</div>
+        <div class="frow3">
+          <div class="field"><label>Fuel to add (L)</label><input type="number" id="ps-fuel-add" step="0.5" inputmode="decimal" data-action="pit.calc"></div>
+          <div class="field"><label>Tank size (L)</label><input type="number" id="ps-tank-size" step="1" inputmode="numeric" data-action="pit.calc"></div>
+          <div class="field"><label>Tyres</label>
+            <select id="ps-tires" data-action="pit.calc-change">
+              <option value="0">No tyres</option><option value="2">2 tyres</option><option value="4">4 tyres</option>
+            </select></div>
+        </div>
+        <div id="ps-results" class="calc-out"></div>
+      </div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-avail" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-avail">Driver Availability<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="frow">
+          <div class="field"><label>Driver</label><select id="av-drv-select" data-action="avail.driver-change"></select></div>
+          <div class="field"><label><span id="av-tz-label"></span></label>
+            <div class="brow">
+              <select id="av-from" style="flex:1"></select>
+              <select id="av-to" style="flex:1"></select>
+            </div>
+          </div>
+        </div>
+        <div class="brow">
+          <button class="btn rd" data-action="avail.apply" data-state="blocked">Not available</button>
+          <button class="btn" data-action="avail.apply" data-state="maybe">Maybe</button>
+          <button class="btn gn" data-action="avail.apply" data-state="open">Available</button>
+        </div>
+        <div class="avwrap" id="avwrap"></div>
+      </div>
     </div>
   </section>
 
-  <!-- ============ TEAM ============ -->
+  <!-- ==================== TEAM ==================== -->
   <section class="v2-screen" id="screen-team">
     <div class="sect-title">Drivers</div>
-    <div id="team-drivers" class="drv-list"></div>
-    <div class="sect-title">Event</div>
-    <div class="panel">
-      <div class="frow">
-        <label>Event<input id="v2-name" data-v2act="cfg" data-k="name"></label>
-        <label>Track<input id="v2-track" data-v2act="cfg" data-k="track"></label>
-        <label>Car<input id="v2-car" data-v2act="cfg" data-k="car"></label>
-      </div>
-      <div class="frow">
-        <label>Date (GMT)<input type="date" id="v2-date" data-v2act="cfg" data-k="date"></label>
-        <label>Start hour (GMT)<input type="number" inputmode="numeric" min="0" max="23" id="v2-hour" data-v2act="cfg" data-k="hour"></label>
-        <label>Hours<input type="number" inputmode="decimal" id="v2-dur" data-v2act="cfg" data-k="dur"></label>
-      </div>
-      <button class="wide" data-v2act="build">Build schedule</button>
+    <div id="drv-list"></div>
+    <div class="brow"><button class="btn pk" data-action="driver.add">+ Add driver</button></div>
+    <div id="iracing-block" style="display:none">
+      <div class="stat" style="margin-top:12px"><div class="stat-l">Team average iRating</div><div class="stat-v accent" id="avg-ir">—</div></div>
     </div>
+
+    <div class="sect-title">Event</div>
+    <div class="v2-card">
+      <div class="field"><label>Sim</label>
+        <select id="cfg-sim" data-action="config.sim-change">
+          <option value="">— Select —</option><option value="iracing">iRacing</option>
+          <option value="lmu">Le Mans Ultimate</option><option value="other">Other</option>
+        </select></div>
+      <div class="field"><label>Event name</label><input id="cfg-name" data-action="config.save-check"></div>
+      <div class="frow">
+        <div class="field"><label>Class</label>
+          <select id="cfg-class-pick" data-action="config.class-pick"></select>
+          <input id="cfg-class" data-action="config.save" placeholder="Type class" style="display:none;margin-top:6px"></div>
+        <div class="field"><label>Car</label>
+          <select id="cfg-car-pick" data-action="config.car-pick"></select>
+          <input id="cfg-car" data-action="config.save" placeholder="Type car" style="display:none;margin-top:6px"></div>
+      </div>
+      <div class="field"><label>Track</label>
+        <select id="cfg-track-pick" data-action="config.track-pick"></select>
+        <input id="cfg-track" data-action="config.save" placeholder="Type track" style="display:none;margin-top:6px"></div>
+      <div class="frow">
+        <div class="field"><label>Date (GMT)</label><input type="date" id="cfg-date" data-action="config.date-change"></div>
+        <div class="field"><label>Green flag offset</label>
+          <select id="cfg-green" data-action="config.save-change">
+            <option value="0">0 min</option><option value="10">10</option><option value="15">15</option>
+            <option value="20">20</option><option value="30">30</option><option value="40" selected>40</option>
+            <option value="45">45</option><option value="50">50</option><option value="60">60</option>
+          </select></div>
+      </div>
+      <div class="frow3">
+        <div class="field"><label>Session start (GMT)</label>
+          <div class="time-pair"><select id="cfg-hour-h" data-action="config.hour-change"></select>
+          <span class="tsep">:</span><select id="cfg-hour-m" data-action="config.hour-change"></select></div></div>
+        <div class="field"><label>Duration</label>
+          <div class="time-pair"><select id="cfg-dur-h" data-action="config.dur-change"></select>
+          <span class="tsep">h</span><select id="cfg-dur-m" data-action="config.dur-change"></select></div></div>
+        <div class="field"><label>In-game start</label>
+          <div class="time-pair"><select id="cfg-ighr-h" data-action="config.ighr-change"></select>
+          <span class="tsep">:</span><select id="cfg-ighr-m" data-action="config.ighr-change"></select></div></div>
+      </div>
+      <div class="frow3">
+        <div class="field"><label>Tank (L)</label><input type="number" id="cfg-tank" inputmode="decimal" data-action="config.save"></div>
+        <div class="field"><label>Pit duration</label><input id="cfg-pit" inputmode="decimal" placeholder="1:10" data-action="config.pit"></div>
+        <div class="field"><label>Reserve (L)</label><input type="number" id="cfg-res" step="0.5" inputmode="decimal" data-action="config.save"></div>
+      </div>
+      <div id="cfg-calc" class="calc-out"></div>
+    </div>
+
+    <div class="v2-card" data-collapse="prereq" id="prereq-block">
+      <div class="sec-head" data-action="ui.collapse" data-id="prereq">Ready to build?<span class="collapse-summary" id="prereq-summary"></span><span class="collapse-chev">▾</span></div>
+      <div class="collapse-body">
+        <div id="prereq-list"></div>
+        <div id="prereq-ready" style="display:none">
+          <button class="btn gn wide" data-v2="strategy">All set — view the schedule</button>
+        </div>
+      </div>
+    </div>
+
     <div class="sect-title">Checklists</div>
-    <div id="team-checks" class="checks"></div>
+    <div class="v2-card">
+      <div class="sub-head">Pre-race</div><div id="cl-pre"></div>
+      <div class="sub-head">Driver change</div><div id="cl-swap"></div>
+      <div class="sub-head">Post-race</div><div id="cl-post"></div>
+      <div class="brow"><button class="btn sm" data-action="check.open">+ Item</button>
+      <button class="btn sm rd" data-action="check.reset">Reset all</button></div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-goals" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-goals">Team Goals<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div id="goals-list"></div>
+        <div class="brow"><button class="btn sm" data-action="goal.open">+ Goal</button></div>
+      </div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-tnotes" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-tnotes">Testing Notes<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div id="tnotes-list"></div>
+        <div class="brow"><button class="btn sm" data-action="tnote.open">+ Note</button></div>
+      </div>
+    </div>
+
+    <div class="v2-card" data-collapse="v2-settings" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="v2-settings">Car Settings<span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="brow"><button class="btn sm" data-action="settings.add-col">+ Column</button>
+        <button class="btn sm rd" data-action="settings.remove-col">- Column</button></div>
+        <div class="twrap"><table id="settings-table"><thead><tr id="settings-head"></tr></thead><tbody id="settings-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="v2-card" data-collapse="archive" data-collapse-default="closed">
+      <div class="sec-head" data-action="ui.collapse" data-id="archive">Archive &amp; Export<span class="collapse-summary" id="archive-summary"></span><span class="collapse-chev">▸</span></div>
+      <div class="collapse-body">
+        <div class="brow">
+          <button class="btn gn" data-action="archive.save">Archive event</button>
+          <button class="btn bl" data-action="export.csv">Export CSV</button>
+          <button class="btn" data-action="export.text">Copy rotation</button>
+        </div>
+        <div id="archive-list"></div>
+      </div>
+    </div>
+
     <div class="sect-title">This device</div>
-    <div class="panel">
-      <div id="v2-sync-state" class="sync-state"></div>
-      <button class="wide" data-v2="team-setup">Team sync settings</button>
-      <button class="wide ghost" data-v2act="demo">Load sample event</button>
-      <div class="build-stamp">v2 · build <span id="v2-build">—</span></div>
+    <div class="v2-card">
+      <div id="sync-summary"></div>
+      <button class="btn wide" data-v2="team-sync">Team sync settings</button>
+      <button class="btn wide ghost" data-action="demo.load">Load sample event</button>
+      <div class="build-stamp">build <span id="build-stamp">—</span></div>
     </div>
   </section>
 
 </main>
 
 <nav id="v2-nav">
-  <button class="on" data-v2="race"><span>Race</span></button>
-  <button data-v2="plan"><span>Plan</span></button>
+  <button class="on" data-v2="pit"><span>Pit Wall</span></button>
+  <button data-v2="strategy"><span>Strategy</span></button>
   <button data-v2="team"><span>Team</span></button>
 </nav>
 
-<!-- Sheets -->
+<!-- ===== sheets. v1's modal ids so v1's logic drives them unchanged ===== -->
 <div class="sheet" id="sheet-entries"><div class="sheet-inner">
   <div class="sheet-title">Your Cars</div>
   <div id="v2-entries"></div>
@@ -166,30 +375,148 @@
 <div class="sheet" id="sheet-team"><div class="sheet-inner">
   <div class="sheet-title">Team Sync</div>
   <div id="v2-team-body"></div>
+  <div id="live-log" class="live-log"></div>
   <div class="sheet-foot"><button class="ghost" data-v2="close">Close</button></div>
+</div></div>
+
+<div class="overlay" id="drv-overlay"><div class="modal">
+  <div class="mtitle" id="drv-mtitle">Add Driver</div>
+  <div class="frow"><div class="field"><label>Saved drivers</label><select id="dm-lib" data-action="driver.lib-load"></select></div>
+    <div class="field"><label>&nbsp;</label><button class="btn xs rd wide" data-action="driver.lib-remove">Remove from library</button></div></div>
+  <div class="frow"><div class="field"><label>Name</label><input id="dm-name"></div>
+    <div class="field"><label>Handle</label><input id="dm-handle"></div></div>
+  <div class="frow3">
+    <div class="field" id="ir-field-modal"><label>iRating</label><input type="number" id="dm-ir" inputmode="numeric"></div>
+    <div class="field"><label>Country</label><select id="dm-country"></select></div>
+    <div class="field"><label>Colour</label><input type="color" id="dm-color"></div>
+  </div>
+  <div class="frow"><div class="field"><label>Timezone</label><select id="dm-tz" data-action="driver.tz-change"></select></div>
+    <div class="field"><label>Clock</label><select id="dm-timefmt"><option value="24">24-hour</option><option value="12">12-hour</option></select></div></div>
+  <div id="dm-tz-info" class="tz-info"></div>
+  <div class="sub-head">Race pace</div>
+  <div class="frow"><div class="field"><label>Lap time</label><input id="dm-lap" inputmode="decimal" placeholder="2:18.5" data-action="driver.lap"></div>
+    <div class="field"><label>Fuel / lap (L)</label><input type="number" id="dm-fpl" step="0.01" inputmode="decimal" data-action="config.check"></div></div>
+  <div class="sub-head">Fuel save pace</div>
+  <div class="frow"><div class="field"><label>FS lap</label><input id="dm-fslap" inputmode="decimal" placeholder="2:20.0" data-action="driver.lap-format"></div>
+    <div class="field"><label>FS fuel / lap</label><input type="number" id="dm-fsburn" step="0.01" inputmode="decimal"></div></div>
+  <div class="field"><label>Max consecutive stints</label><input type="number" id="dm-maxconsec" min="1" max="10" inputmode="numeric"></div>
+  <input type="hidden" id="dm-idx">
+  <div class="mfoot">
+    <button class="btn rd" id="dm-delete-btn" data-action="driver.delete" style="display:none">Delete</button>
+    <button class="btn" data-action="driver.close">Cancel</button>
+    <button class="btn pk" data-action="driver.save">Save</button>
+  </div>
+</div></div>
+
+<div class="overlay" id="note-overlay"><div class="modal">
+  <div class="mtitle">Stint <span id="note-num">—</span></div>
+  <div class="frow"><div class="field"><label>Actual end (GMT)</label><input id="note-end" inputmode="numeric" placeholder="15:02"></div>
+    <div class="field"><label>Actual laps</label><input type="number" id="note-laps" inputmode="numeric"></div></div>
+  <div class="frow"><div class="field"><label>Position</label><input id="note-pos" inputmode="numeric"></div>
+    <div class="field"><label>Repair time</label><input id="note-dmg" inputmode="decimal" placeholder="1:20"></div></div>
+  <div class="field"><label>Notes</label><textarea id="note-txt" rows="3"></textarea></div>
+  <input type="hidden" id="note-idx">
+  <div class="mfoot"><button class="btn" data-action="note.close">Cancel</button>
+    <button class="btn gn" data-action="note.done">Mark done</button>
+    <button class="btn pk" data-action="note.save">Save</button></div>
+</div></div>
+
+<div class="overlay" id="goal-overlay"><div class="modal">
+  <div class="mtitle">Add Goal</div>
+  <div class="field"><label>Goal</label><textarea id="goal-txt" rows="2"></textarea></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="goal-overlay">Cancel</button>
+    <button class="btn pk" data-action="goal.save">Add</button></div>
+</div></div>
+
+<div class="overlay" id="check-overlay"><div class="modal">
+  <div class="mtitle">Add Checklist Item</div>
+  <div class="field"><label>Category</label><select id="check-cat">
+    <option value="pre">Pre-race</option><option value="swap">Driver change</option><option value="post">Post-race</option></select></div>
+  <div class="field"><label>Item</label><textarea id="check-txt" rows="2"></textarea></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="check-overlay">Cancel</button>
+    <button class="btn pk" data-action="check.save">Add</button></div>
+</div></div>
+
+<div class="overlay" id="tnote-overlay"><div class="modal">
+  <div class="mtitle">Add Testing Note</div>
+  <div class="frow"><div class="field"><label>Driver</label><select id="tn-drv"></select></div>
+    <div class="field"><label>Best lap</label><input id="tn-lap"></div></div>
+  <div class="frow4"><div class="field"><label>Air</label><input type="number" id="tn-air" step="0.1" inputmode="decimal"></div>
+    <div class="field"><label>Track</label><input type="number" id="tn-trk" step="0.1" inputmode="decimal"></div>
+    <div class="field"><label>Unit</label><select id="tn-unit"><option value="C">°C</option><option value="F">°F</option></select></div>
+    <div class="field"><label>Fuel</label><input id="tn-fuel"></div></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="tnote-overlay">Cancel</button>
+    <button class="btn pk" data-action="tnote.save">Add</button></div>
+</div></div>
+
+<div class="overlay" id="col-overlay"><div class="modal">
+  <div class="mtitle">Add Setting Column</div>
+  <div class="field"><label>Column name</label><input id="col-name"></div>
+  <div class="mfoot"><button class="btn" data-action="modal.close" data-target="col-overlay">Cancel</button>
+    <button class="btn pk" data-action="settings.confirm-col">Add</button></div>
+</div></div>
+
+<div class="overlay" id="dmg-overlay"><div class="modal">
+  <div class="mtitle">Report Damage</div>
+  <div class="tz-info" id="dmg-modal-subtitle"></div>
+  <div class="field"><label>Repair time</label><input id="dmg-time-input" inputmode="decimal"></div>
+  <input type="hidden" id="dmg-idx">
+  <div class="mfoot"><button class="btn" data-action="damage.cancel">Cancel</button>
+    <button class="btn pk" data-action="damage.save">Confirm</button></div>
+</div></div>
+
+<div class="overlay" id="logo-crop-overlay"><div class="modal">
+  <div class="mtitle">Crop Your Logo</div>
+  <canvas id="logo-crop-canvas" width="260" height="260"></canvas>
+  <div class="field"><label>Zoom</label><input type="range" id="logo-crop-zoom" min="1" max="4" step="0.05" value="1" data-action="logo.zoom"></div>
+  <div class="brow" style="justify-content:center">
+    <button class="btn" data-action="logo.nudge" data-dx="-1" data-dy="0">←</button>
+    <button class="btn" data-action="logo.nudge" data-dx="0" data-dy="-1">↑</button>
+    <button class="btn" data-action="logo.nudge" data-dx="0" data-dy="1">↓</button>
+    <button class="btn" data-action="logo.nudge" data-dx="1" data-dy="0">→</button>
+  </div>
+  <div class="mfoot"><button class="btn" data-action="logo.cancel">Cancel</button>
+    <button class="btn pk" data-action="logo.save">Use this logo</button></div>
+</div></div>
+
+<div class="overlay" id="team-overlay"><div class="modal">
+  <div class="mtitle">Team Sync</div>
+  <div id="team-setup-disconnected">
+    <div class="team-lead">Everyone on the team uses the <strong>same name and password</strong>.</div>
+    <div class="field"><label>Team name</label><input id="team-name-input" placeholder="Wildthings Racing" maxlength="60" data-action="team.name"></div>
+    <div class="field"><label>Team password</label><input type="password" id="team-pass-input" placeholder="something your team knows"></div>
+    <button class="btn gn wide" data-action="team.join">Connect</button>
+    <details><summary class="team-adv">Advanced: use a team key</summary>
+      <input id="live-key-input" data-action="team.key-typed" placeholder="team key">
+      <div id="live-key-warn" style="display:none"></div>
+      <div class="brow"><button class="btn" data-action="live.connect">Join with key</button>
+      <button class="btn" data-action="live.new">Random key</button></div>
+    </details>
+  </div>
+  <div id="team-setup-connected" style="display:none">
+    <div class="team-connected-badge"><span class="s-sync-dot live" id="team-dot"></span><span id="team-connected-label">Connected</span></div>
+    <div class="team-key-line">Team key<strong id="team-key-shown"></strong></div>
+    <div id="team-peers-line" class="team-hint"></div>
+    <button class="btn bl wide" data-action="live.invite">Copy invite link</button>
+    <button class="btn rd wide" data-action="live.disconnect">Leave team</button>
+  </div>
+  <hr>
+  <div class="sub-head">Team logo</div>
+  <div class="brow">
+    <div id="team-logo-preview"></div>
+    <label class="btn bl">Choose image<input type="file" id="team-logo-file" accept="image/*" style="display:none" data-action="team.logo"></label>
+    <button class="btn rd" data-action="team.logo-clear">Remove</button>
+  </div>
+  <div class="mfoot"><button class="btn" data-action="team.close">Close</button></div>
 </div></div>
 
 <div class="sheet" id="sheet-stint"><div class="sheet-inner">
   <div class="sheet-title">Stint <span id="v2-stint-num"></span></div>
-  <div class="frow">
-    <label>Driver<select id="v2-stint-driver"></select></label>
-    <label>Actual end (GMT)<input id="v2-stint-end" inputmode="numeric" placeholder="15:02"></label>
-  </div>
-  <div class="frow">
-    <label>Actual laps<input type="number" inputmode="numeric" id="v2-stint-laps"></label>
-    <label>Position<input id="v2-stint-pos" inputmode="numeric"></label>
-  </div>
-  <label>Notes<textarea id="v2-stint-notes" rows="3"></textarea></label>
-  <div class="sheet-foot">
-    <button data-v2act="stint-save">Save</button>
-    <button data-v2act="stint-done">Mark done</button>
-    <button class="ghost" data-v2="close">Close</button>
-  </div>
+  <div id="v2-stint-body"></div>
+  <div class="sheet-foot"><button class="ghost" data-v2="close">Close</button></div>
 </div></div>
 
-<!-- Engine, shared with v1. These files render into v1's markup, which is not
-     present here, so their render functions no-op harmlessly; v2 supplies its
-     own. main.js is deliberately NOT loaded: it is v1's boot sequence. -->
+<!-- Engine, shared with v1. main.js is v1's boot and is deliberately excluded. -->
 <script src="../js/data.js"></script>
 <script src="../js/state.js"></script>
 <script src="../js/catalog.js"></script>
@@ -206,6 +533,7 @@
 <script src="../js/entries.js"></script>
 <script src="../js/demo.js"></script>
 <script src="../js/live.js"></script>
+<script src="../js/actions.js"></script>
 <script src="v2.js"></script>
 </body>
 </html>
