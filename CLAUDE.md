@@ -110,6 +110,14 @@ text box does not also fire it on the trailing `change`.
 code and must stay last. In CSS, `styles/pages.css` must stay last because its
 media queries override everything above.
 
+**Top-level `let`/`const` are NOT on `window`.** In a classic script they live in
+script scope, so `S`, `LIVE_KEY` and every other `let`/`const` are reachable from
+other scripts but invisible as `window.S`. Only `function` declarations get
+attached to `window`. This bit the live-sync tests, which drive two app instances
+in iframes: reaching in has to go through that frame's own `eval()`, not through
+`frame.contentWindow.S`. It also matters for Step 6, since it means the harness's
+`LUM.globals()` check only covers functions.
+
 **The splits were verbatim extractions, and Step 5 ended that.** Concatenating
 the files used to reproduce the original inline blocks exactly. Replacing the
 handlers necessarily edited `index.html`, `schedule.js`, `drivers.js`,
@@ -221,11 +229,22 @@ rather than applied, with the winning value returned to the sender. That is the
 property the Apps Script backend lacks and the reason it is not safe to patch:
 it writes whole state, so a device holding old data overwrites everything.
 
-**Phase 2. Reshape state into Team / Entry / Person.** Migrate the existing
-`lum4` localStorage into a single entry on first launch so nothing is lost.
-`lum_drivers` is cross-event and moves to team level.
+**Phase 3 is DONE and live** (built before Phase 2 deliberately, see below).
+`js/live.js` wires the app to the backend. `persist()` is the single choke point
+every change passes through, so the client hooks there, diffs `S` into field
+paths, and sends only what moved. `sync-check.html` is a standalone two-device
+proof that shares nothing with the app but the URL, which makes it the fastest
+way to tell whether a sync problem is the backend or the app.
 
-**Phase 3. Wire the app to the live pipe.** Only after 2.
+**Phase 2 was deliberately deferred behind Phase 3.** The full Team/Entry/Person
+reshape is the riskier, more invisible job, and Michael needed working
+phone-to-PC sync more than he needed the data model. The cost of that ordering
+was made near zero by namespacing every path under an entry id from day one:
+`e/default/config/track`. Adding real entries later is additive, not a breaking
+change to paths already stored on the server. Do NOT flatten those paths.
+
+Still to do in Phase 2: multiple entries, the team-level driver library, and
+migrating `lum_drivers` to team level.
 
 **Phase 4. Home screen, entry switcher, and the mobile redesign together.**
 Do NOT redesign before this: the home screen and switcher change navigation, so

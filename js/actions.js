@@ -105,7 +105,13 @@ const ACTIONS = {
   'export.csv':      { run: () => exportScheduleCSV() },
   'export.text':     { run: () => exportScheduleText() },
 
-  // ---- LIVE SYNC -----------------------------------------------------------
+  // ---- LIVE SYNC (Cloudflare, current) -------------------------------------
+  'live.connect':    { run: () => liveConnect() },
+  'live.disconnect': { run: () => liveDisconnect() },
+  'live.new':        { run: () => liveNewTeam() },
+  'live.invite':     { run: () => liveCopyInvite() },
+
+  // ---- OLD SYNC (Google Apps Script, retiring) -----------------------------
   'sync.connect':    { run: () => saveSyncUrl() },
   'sync.disconnect': { run: () => disconnectSync() },
 

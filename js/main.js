@@ -19,5 +19,5 @@ function loadState(){
 }
 function resetDrivers(){S.drivers=[{id:1,name:'Driver 1',handle:'',ir:0,tz:'America/New_York',gmt:-5,tzabbr:'ET',country:'',countryName:'',countryFlag:'',color:'#DFFF00',maxConsec:2,timefmt:'12',lap:'',fpl:'',fslap:'',fsburn:'',settings:{}},{id:2,name:'Driver 2',handle:'',ir:0,tz:'America/Chicago',gmt:-6,tzabbr:'CT',country:'',countryName:'',countryFlag:'',color:'#8EC7E6',maxConsec:2,timefmt:'12',lap:'',fpl:'',fslap:'',fsburn:'',settings:{}},{id:3,name:'Driver 3',handle:'',ir:0,tz:'America/Los_Angeles',gmt:-8,tzabbr:'PT',country:'',countryName:'',countryFlag:'',color:'#FF8A1C',maxConsec:2,timefmt:'12',lap:'',fpl:'',fslap:'',fsburn:'',settings:{}}];}
 
-initDelegation();loadSyncUrl();loadState();
+initDelegation();loadSyncUrl();loadState();liveInit();
 setInterval(updateDash,5000);

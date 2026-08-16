@@ -300,8 +300,34 @@
         <div style="font-family:var(--mono);font-size:0.54rem;color:var(--muted);margin-bottom:10px;text-transform:none">Archive saves a snapshot of this event you can reload later. CSV and Copy give you a clean rotation to drop in Discord.</div>
         <div id="archive-list"></div>
       </div>
+      <div class="card volt-l">
+        <div class="sec-head">Live Sync <span style="font-family:var(--mono);font-size:0.6rem;color:var(--green);margin-left:8px;text-transform:none">new</span></div>
+        <div style="font-family:var(--mono);font-size:0.66rem;color:var(--text-mid);margin-bottom:12px;text-transform:none;line-height:1.6">
+          Keeps this device in step with your other devices and your teammates, live. Tap <strong>New Team</strong> once, then <strong>Copy Invite Link</strong> and open that link on your phone. Anyone with the link can view and edit, so treat it like a key.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="live-key-input" style="flex:1;min-width:180px;text-transform:none" placeholder="Team key" autocomplete="off" spellcheck="false">
+          <button class="btn gn" data-action="live.connect">Connect</button>
+        </div>
+        <div class="brow" style="gap:8px;margin-top:8px">
+          <button class="btn pk" data-action="live.new">+ New Team</button>
+          <button class="btn bl" data-action="live.invite">⎙ Copy Invite Link</button>
+          <button class="btn rd" data-action="live.disconnect">Disconnect</button>
+        </div>
+        <div id="live-key-disp" style="display:none" class="sync-url-disp"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <span class="s-sync-dot" id="live-dot" style="background:var(--muted)"></span>
+          <span id="live-status" style="font-family:var(--mono);font-size:0.68rem;color:var(--text-mid)">Offline</span>
+        </div>
+        <div id="live-peers" style="font-family:var(--mono);font-size:0.64rem;color:var(--gulf);margin-top:6px;text-transform:none"></div>
+        <div id="live-log" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-top:10px;white-space:pre-wrap;text-transform:none;max-height:120px;overflow:auto"></div>
+      </div>
+
       <div class="card gulf-l">
-        <div class="sec-head" style="color:var(--gulf);border-color:var(--gulf-border)">Live Sync — Teammate Sharing</div>
+        <div class="sec-head" style="color:var(--gulf);border-color:var(--gulf-border)">Old Sync (Google Sheet) — being retired</div>
+        <div style="font-family:var(--mono);font-size:0.64rem;color:var(--orange);margin-bottom:10px;text-transform:none;line-height:1.6">
+          Superseded by Live Sync above. Kept for one release as a fallback. The deployed script no longer matches this app, so it will not work as-is. Do not rely on it.
+        </div>
         <div class="sync-panel">
           <div style="font-family:var(--display);font-size:0.4rem;font-weight:600;letter-spacing:0.2em;color:var(--volt);margin-bottom:12px">Setup Instructions</div>
           <div class="sync-step"><div class="sync-num">1</div><div>Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank">sheets.google.com</a>. You can name it anything — it just stores the sync state.</div></div>
@@ -617,6 +643,7 @@
 <script src="js/optimizer.js"></script>
 <script src="js/nav.js"></script>
 <script src="js/sync.js"></script>
+<script src="js/live.js"></script>
 <script src="js/demo.js"></script>
 <script src="js/actions.js"></script>
 <script src="js/main.js"></script>

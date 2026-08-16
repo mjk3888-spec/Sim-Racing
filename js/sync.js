@@ -40,5 +40,9 @@ function setSyncStatus(state,msg){
 async function pushState(){if(!SYNC_URL||!_sEnabled)return;try{const r=await fetch(SYNC_URL,{method:'POST',body:JSON.stringify({action:'write',ts:Date.now(),state:JSON.stringify(S)})});if(r.ok)setSyncStatus('ok','Synced');else setSyncStatus('error','Push Failed');}catch(e){setSyncStatus('error','Push Error');}}
 async function pullState(){if(!SYNC_URL||!_sEnabled)return;try{const r=await fetch(SYNC_URL+'?action=read&ts='+_lsTs);if(!r.ok){setSyncStatus('error','Pull Failed');return;}const data=await r.json();if(data&&data.ts&&data.ts>_lsTs&&data.state){_lsTs=data.ts;const remote=JSON.parse(data.state);S.stints=remote.stints||S.stints;S.config=remote.config||S.config;S.schMeta=remote.schMeta||S.schMeta;S.goals=remote.goals||S.goals;S.checks=remote.checks||S.checks;S.avail=remote.avail||S.avail;if(remote.drivers&&remote.drivers.length){remote.drivers.forEach(rd=>{const li=S.drivers.findIndex(d=>d.id===rd.id);if(li>=0)S.drivers[li]=rd;else S.drivers.push(rd);});}populateConfig();renderDriverList();renderSchedule();buildAvail();renderGoalsDash();renderGoals();renderChecklists();updateDash();setSyncStatus('ok','Synced');}else setSyncStatus('ok','Live');}catch(e){setSyncStatus('error','Pull Error');}}
 const _lp=()=>{try{localStorage.setItem('lum4',JSON.stringify(S));}catch(e){}};
-function persist(){_lp();if(_sEnabled&&SYNC_URL)pushState();}
+/* persist() is the single choke point every change in the app passes through,
+   which is why the live client hooks in here rather than in 60 call sites.
+   liveOnLocalChange() diffs S and sends only the fields that actually moved,
+   and no-ops when not connected or while a remote patch is being applied. */
+function persist(){_lp();try{liveOnLocalChange();}catch(e){}if(_sEnabled&&SYNC_URL)pushState();}
 function openSyncSetup(){pg('config');}

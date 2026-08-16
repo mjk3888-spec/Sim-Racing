@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Luminary — Sync Check</title>
+<!--
+  Standalone two-device sync proof. Not part of the app.
+
+  Open this on a phone and a computer at the same time with the same team key.
+  Type in one, watch it appear in the other. That is the whole point: proving
+  the pipe with your own eyes rather than taking a test suite's word for it.
+
+  It also stays useful as a debugging tool: when the real app's syncing
+  misbehaves later, this tells you instantly whether the problem is the backend
+  or the app, because this page shares nothing with the app but the URL.
+-->
+<style>
+  :root{--volt:#DFFF00;--gulf:#8EC7E6;--green:#39FF14;--red:#FF4040;
+        --bg:#050505;--surface:#111;--border:#2A2A2A;--text:#fff;--muted:#8A8A8A;}
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px;background:var(--bg);color:var(--text);
+       font-family:ui-monospace,"Share Tech Mono",monospace;font-size:16px;line-height:1.5;
+       padding-bottom:calc(16px + env(safe-area-inset-bottom));}
+  h1{font-size:19px;color:var(--volt);letter-spacing:.12em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:18px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:6px;
+        padding:14px;margin-bottom:14px}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;letter-spacing:.08em}
+  input,textarea{width:100%;background:#000;color:var(--text);border:1px solid var(--border);
+        border-radius:4px;padding:11px;font:inherit;font-size:16px}
+  textarea{min-height:110px;resize:vertical}
+  button{background:transparent;color:var(--volt);border:1px solid var(--volt);
+        border-radius:4px;padding:11px 16px;font:inherit;font-size:15px;cursor:pointer;margin-right:8px}
+  button.sec{color:var(--muted);border-color:var(--border)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--muted);display:inline-block;
+       flex-shrink:0;margin-right:8px;vertical-align:middle}
+  .dot.on{background:var(--green)} .dot.off{background:var(--red)}
+  #log{font-size:12.5px;color:var(--muted);max-height:190px;overflow:auto;
+       white-space:pre-wrap;word-break:break-word;margin-top:8px}
+  .peers{font-size:13px;color:var(--gulf);margin-top:8px}
+  code{color:var(--volt);word-break:break-all;font-size:13px}
+  a{color:var(--gulf)}
+</style>
+</head>
+<body>
+
+<h1>SYNC CHECK</h1>
+<div class="sub">Open this on two devices with the same team key. Type in one. It should appear in the other within a second.</div>
+
+<div class="card">
+  <label>Team key</label>
+  <input id="key" placeholder="loading..." autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div class="row">
+    <button id="connect">Connect</button>
+    <button id="newkey" class="sec">New key</button>
+    <button id="copy" class="sec">Copy link</button>
+  </div>
+  <div class="row"><span class="dot" id="dot"></span><span id="status">Not connected</span></div>
+  <div class="peers" id="peers"></div>
+</div>
+
+<div class="card">
+  <label>Shared text — this is the thing that syncs</label>
+  <textarea id="shared" placeholder="Type here on either device..."></textarea>
+  <div class="row"><span id="saved" style="font-size:13px;color:var(--muted)"></span></div>
+</div>
+
+<div class="card">
+  <label>Connection log</label>
+  <div id="log"></div>
+</div>
+
+<script>
+const WS_BASE = 'wss://luminary-sync.mjk3888.workers.dev';
+const HTTP_BASE = 'https://luminary-sync.mjk3888.workers.dev';
+const FIELD = 'synccheck.text';
+
+const $ = id => document.getElementById(id);
+const clientId = Math.random().toString(36).slice(2, 10);
+let ws = null, connected = false, lastSentTs = 0, applyingRemote = false, retry = 0, retryTimer = null;
+
+function log(msg) {
+  const t = new Date().toLocaleTimeString();
+  $('log').textContent = t + '  ' + msg + '\n' + $('log').textContent;
+}
+function setStatus(text, cls) {
+  $('status').textContent = text;
+  $('dot').className = 'dot' + (cls ? ' ' + cls : '');
+}
+
+function keyFromUrl() {
+  const p = new URLSearchParams(location.search).get('key');
+  return p ? p.toLowerCase() : '';
+}
+
+async function ensureKey() {
+  let k = keyFromUrl() || localStorage.getItem('synccheck_key') || '';
+  if (!k) {
+    try {
+      const r = await fetch(HTTP_BASE + '/team/new');
+      k = (await r.json()).teamKey;
+    } catch (e) { log('could not reach server to get a key: ' + e.message); return ''; }
+  }
+  $('key').value = k;
+  localStorage.setItem('synccheck_key', k);
+  return k;
+}
+
+function connect() {
+  if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+  clearTimeout(retryTimer);
+  const key = $('key').value.trim().toLowerCase();
+  if (!key) { log('no team key'); return; }
+  localStorage.setItem('synccheck_key', key);
+  setStatus('Connecting...', '');
+  const name = /iPhone|iPad|Android/i.test(navigator.userAgent) ? 'Phone' : 'Computer';
+  ws = new WebSocket(WS_BASE + '/team/' + encodeURIComponent(key) + '/ws?clientId=' + clientId + '&name=' + name);
+
+  ws.onopen = () => {
+    connected = true; retry = 0;
+    setStatus('Connected as ' + name, 'on');
+    log('connected');
+  };
+  ws.onclose = () => {
+    connected = false;
+    setStatus('Disconnected, retrying...', 'off');
+    log('disconnected');
+    retry = Math.min(retry + 1, 6);
+    retryTimer = setTimeout(connect, 500 * Math.pow(2, retry));
+  };
+  ws.onerror = () => log('socket error');
+  ws.onmessage = e => {
+    let m; try { m = JSON.parse(e.data); } catch (x) { return; }
+    if (m.type === 'snapshot') {
+      log('snapshot: ' + m.fieldCount + ' field(s)');
+      if (m.state[FIELD] !== undefined) applyRemote(m.state[FIELD]);
+    } else if (m.type === 'patch' && m.path === FIELD) {
+      log('change received from another device');
+      applyRemote(m.value);
+    } else if (m.type === 'presence') {
+      const others = m.peers.filter(p => p.clientId !== clientId);
+      $('peers').textContent = others.length
+        ? 'Also here: ' + others.map(p => p.name).join(', ')
+        : 'No other device connected yet';
+    } else if (m.type === 'ack') {
+      $('saved').textContent = 'Saved ' + new Date().toLocaleTimeString();
+    } else if (m.type === 'rejected') {
+      log('REJECTED as stale, server value kept');
+      applyRemote(m.value);
+    } else if (m.type === 'error') {
+      log('server error: ' + m.error);
+    }
+  };
+}
+
+function applyRemote(value) {
+  applyingRemote = true;
+  const el = $('shared');
+  if (el.value !== value) {
+    const atEnd = el.selectionStart === el.value.length;
+    el.value = value == null ? '' : value;
+    if (atEnd) el.selectionStart = el.selectionEnd = el.value.length;
+  }
+  applyingRemote = false;
+}
+
+let sendTimer = null;
+$('shared').addEventListener('input', () => {
+  if (applyingRemote) return;
+  clearTimeout(sendTimer);
+  // Debounced so a burst of typing is one message, not one per keystroke.
+  sendTimer = setTimeout(() => {
+    if (!connected) { log('not connected, change not sent'); return; }
+    lastSentTs = Date.now();
+    ws.send(JSON.stringify({ type: 'patch', path: FIELD, value: $('shared').value, ts: lastSentTs, clientId }));
+  }, 250);
+});
+
+$('connect').onclick = connect;
+$('newkey').onclick = async () => {
+  localStorage.removeItem('synccheck_key');
+  history.replaceState({}, '', location.pathname);
+  $('key').value = '';
+  await ensureKey();
+  connect();
+};
+$('copy').onclick = () => {
+  const link = location.origin + location.pathname + '?key=' + encodeURIComponent($('key').value.trim());
+  if (navigator.clipboard) navigator.clipboard.writeText(link).then(
+    () => log('link copied — open it on your other device'),
+    () => prompt('Copy this link:', link));
+  else prompt('Copy this link:', link);
+};
+
+ensureKey().then(k => { if (k) connect(); });
+</script>
+</body>
+</html>
