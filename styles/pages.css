@@ -49,7 +49,12 @@ td.diff-cell{background:rgba(255,138,28,0.06)!important;border-left:2px solid rg
 .sync-step:last-child{border-bottom:none;}
 .sync-num{font-family:var(--display);font-size:0.56rem;font-weight:700;color:var(--volt);flex-shrink:0;width:18px;}
 .sync-step a{color:var(--gulf);}
-.l08{position:fixed;bottom:8px;right:12px;font-family:var(--display);font-size:0.4rem;font-weight:700;letter-spacing:0.16em;color:rgba(223,255,0,0.12);pointer-events:none;z-index:50;}
+/* Build stamp. This is a diagnostic, not decoration: it is how we answer "is
+   this device running the current build or a stale cache?" without devtools, so
+   it has to be legible. It was 6.4px at 1.26:1 contrast, which is invisible on a
+   phone. Now ~11px at roughly 12:1, and lifted clear of the iPhone home
+   indicator by the safe-area inset so it stops being cut off. */
+.l08{position:fixed;bottom:calc(6px + env(safe-area-inset-bottom));right:calc(10px + env(safe-area-inset-right));font-family:var(--display);font-size:0.68rem;font-weight:700;letter-spacing:0.1em;color:rgba(223,255,0,0.7);background:rgba(5,5,5,0.85);padding:3px 7px;border-radius:3px;pointer-events:none;z-index:50;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--border-bright);}
