@@ -130,3 +130,38 @@ hr{border:none;border-top:1px solid var(--border);margin:14px 0;}
    normal browser tab, so this is a no-op outside the installed app. */
 #strip{padding-top:env(safe-area-inset-top,0px);}
 body{padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);}
+
+/* ===================== PHONE: STINT TABLE ==========================
+   Sixteen columns cannot be read on a phone, and cramming them in is the wrong
+   answer. Michael's own call on what he looks at mid-stint: who is in the car
+   and when they get out. So the phone shows #, Status, Driver, Start, End and
+   the edit pencil, and EVERYTHING ELSE MOVES INTO THE EDIT POPUP rather than
+   disappearing. Hiding data he still has to type would be worse than scrolling.
+   Columns: 1 # · 2 Status · 3 Driver · 4 Type · 5 GMT Start · 6 GMT End
+            7 Local Start · 8 Local End · 9 Duration · 10 Laps · 11 Fuel
+            12 Actual End · 13 Act Laps · 14 Pos · 15 Damage · 16 Notes  */
+@media(max-width:768px){
+  #stint-table th:nth-child(4),  #stint-table td:nth-child(4),
+  #stint-table th:nth-child(7),  #stint-table td:nth-child(7),
+  #stint-table th:nth-child(8),  #stint-table td:nth-child(8),
+  #stint-table th:nth-child(9),  #stint-table td:nth-child(9),
+  #stint-table th:nth-child(10), #stint-table td:nth-child(10),
+  #stint-table th:nth-child(11), #stint-table td:nth-child(11),
+  #stint-table th:nth-child(12), #stint-table td:nth-child(12),
+  #stint-table th:nth-child(13), #stint-table td:nth-child(13),
+  #stint-table th:nth-child(14), #stint-table td:nth-child(14),
+  #stint-table th:nth-child(15), #stint-table td:nth-child(15){display:none;}
+  #stint-table{width:100%;}
+  #stint-table td,#stint-table th{padding:7px 6px;}
+
+  /* Config stacks instead of scrolling sideways. Two things were needed:
+     the 600px floor (which existed to hold two columns a phone has no room
+     for), and min-width:0 on the grid children. Grid and flex items default to
+     min-width:auto, which means they refuse to shrink below their content, so
+     the settings table's 760px minimum was forcing the whole column wide and
+     defeating its own scroll container. This is the usual cause of a stubborn
+     sideways scroll and it is not obvious from looking at the markup. */
+  #page-config .g2{min-width:0!important;}
+  #page-config .g2>*, #page-config .g2>*>*{min-width:0;}
+  .twrap{max-width:100%;}
+}

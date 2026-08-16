@@ -132,10 +132,26 @@ function delTNote(ni){if(confirm('Delete?')){S.tnotes.splice(ni,1);persist();ren
 function saveSchMeta(){if(!S.schMeta)S.schMeta={};S.schMeta.qualiDriver=gv('sch-quali-driver');S.schMeta.qualiNotes=gv('sch-quali-notes');persist();renderStatusLog();}
 function saveSchMetaPos(){const raw=gv('sch-quali-pos');const n=parseInt(raw);const pos=raw?(!isNaN(n)?ordinal(n):raw):'';if(!S.schMeta)S.schMeta={};S.schMeta.qualiPos=pos;sv('sch-quali-pos',pos);persist();renderStatusLog();}
 function loadSchMeta(){const m=S.schMeta||{};const s=el('sch-quali-driver');if(s){s.innerHTML='<option value="">— Select Driver —</option>'+S.drivers.map(d=>`<option value="${d.name}"${m.qualiDriver===d.name?' selected':''}>${d.handle||d.name}</option>`).join('');}sv('sch-quali-pos',m.qualiPos||'');sv('sch-quali-notes',m.qualiNotes||'');}
-function openNote(idx){const s=S.stints[idx];el('note-num').textContent=s.num;sv('note-end',s.actualEnd);sv('note-laps',s.actualLaps);sv('note-txt',s.notes);el('note-idx').value=idx;el('note-overlay').classList.add('on');}
+function openNote(idx){const s=S.stints[idx];el('note-num').textContent=s.num;sv('note-end',s.actualEnd);sv('note-laps',s.actualLaps);sv('note-pos',s.position||'');sv('note-dmg',s.damage?(s.damageTime||''):'');sv('note-txt',s.notes);el('note-idx').value=idx;el('note-overlay').classList.add('on');}
 function closeNote(){el('note-overlay').classList.remove('on');}
-function saveNote(){const idx=parseInt(gv('note-idx'));const ae=gv('note-end');const prev=S.stints[idx].actualEnd;S.stints[idx].actualEnd=ae;S.stints[idx].actualLaps=gv('note-laps');S.stints[idx].notes=gv('note-txt');if(ae&&ae!==prev)cascade(idx,ae);persist();closeNote();renderSchedule();updateDash();}
-function markDone(){const idx=parseInt(gv('note-idx'));const ae=gv('note-end');S.stints[idx].actualEnd=ae;S.stints[idx].actualLaps=gv('note-laps');S.stints[idx].notes=gv('note-txt');S.stints[idx].done=true;if(ae)cascade(idx,ae);persist();closeNote();renderSchedule();updateDash();}
+/* Shared by Save and Mark Done. Position and damage live here as well as in the
+   table because the phone stint table hides those columns, and a field you
+   cannot reach on the device you race with is worse than no field at all. */
+function applyNoteFields(idx){
+  const ae=gv('note-end');
+  S.stints[idx].actualEnd=ae;
+  S.stints[idx].actualLaps=gv('note-laps');
+  S.stints[idx].notes=gv('note-txt');
+  const rawPos=gv('note-pos').trim();
+  const pn=parseInt(rawPos);
+  S.stints[idx].position=rawPos?(isNaN(pn)?rawPos:ordinal(pn)):'';
+  const dmg=gv('note-dmg').trim();
+  S.stints[idx].damage=!!dmg;
+  S.stints[idx].damageTime=dmg;
+  return ae;
+}
+function saveNote(){const idx=parseInt(gv('note-idx'));const prev=S.stints[idx].actualEnd;const ae=applyNoteFields(idx);if(ae&&ae!==prev)cascade(idx,ae);persist();closeNote();renderSchedule();renderStatusLog();updateDash();}
+function markDone(){const idx=parseInt(gv('note-idx'));const ae=applyNoteFields(idx);S.stints[idx].done=true;if(ae)cascade(idx,ae);persist();closeNote();renderSchedule();renderStatusLog();updateDash();}
 
 // STATUS LOG
 function quickLog(type){

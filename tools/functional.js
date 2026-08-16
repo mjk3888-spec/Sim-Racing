@@ -490,6 +490,25 @@ window.LUMTEST = (function () {
       check('the retired Google Sheet sync card is gone', () => {
         return (!$('#sync-url-input') && !$('#sync-dot2')) || 'old sync card still present';
       });
+      check('note popup can edit position and damage', () => {
+        // The phone stint table hides those columns, so if they are not editable
+        // here they are unreachable on the device he actually races with.
+        if (!$('#note-pos') || !$('#note-dmg')) return 'position/damage fields missing from popup';
+        click(document.querySelector('[data-action="stint.note"][data-i="0"]'));
+        $('#note-pos').value = '4';
+        $('#note-dmg').value = '1:20';
+        click($('[data-action="note.save"]'));
+        if (S.stints[0].position !== '4th') return 'position not saved, got ' + S.stints[0].position;
+        if (S.stints[0].damage !== true) return 'damage flag not set';
+        if (S.stints[0].damageTime !== '1:20') return 'repair time not saved';
+        return true;
+      });
+      check('clearing repair time in the popup clears the damage flag', () => {
+        click(document.querySelector('[data-action="stint.note"][data-i="0"]'));
+        $('#note-dmg').value = '';
+        click($('[data-action="note.save"]'));
+        return S.stints[0].damage === false || 'damage stayed set with no repair time';
+      });
 
       // ---- SAMPLE EVENT ----------------------------------------------------
       // Destructive: replaces all state. Must stay LAST in this suite.
