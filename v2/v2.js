@@ -9,7 +9,7 @@
    they no-op harmlessly here. v1's boot file (main.js) is deliberately NOT
    loaded, because this file is the boot sequence instead. */
 
-const V2_BUILD = '2026-08-16.14';
+const V2_BUILD = '2026-08-16.15';
 
 /* ---------- helpers ---------- */
 const q = s => document.querySelector(s);
@@ -33,6 +33,13 @@ function v2Go(screen) {
   qa('.v2-screen').forEach(s => s.classList.toggle('on', s.id === 'screen-' + screen));
   qa('#v2-nav button').forEach(b => b.classList.toggle('on', b.dataset.v2 === screen));
   v2Render();
+}
+/* True when the user is currently typing somewhere inside this region, in which
+   case it must not be rebuilt out from under them. */
+function holdsFocus(sel) {
+  const root = q(sel), a = document.activeElement;
+  if (!root || !a || a === document.body) return false;
+  return root.contains(a);
 }
 function openSheet(id) { q('#sheet-' + id).classList.add('on'); v2Render(); }
 function closeSheets() { qa('.sheet').forEach(s => s.classList.remove('on')); }
@@ -242,8 +249,18 @@ function v2Render() {
     else if (V2_SCREEN === 'plan') renderPlan();
     else renderTeam();
 
-    if (q('#sheet-entries').classList.contains('on')) renderEntriesSheet();
-    if (q('#sheet-team').classList.contains('on')) renderTeamSheet();
+    /* NEVER rebuild a region that currently holds focus.
+
+       v2 re-renders once a second so the countdown ticks. That is fine for
+       read-only regions, but rebuilding innerHTML destroys and recreates the
+       element the user is typing into, which on iOS drops focus and closes the
+       keyboard. Tapping the team name or password field popped the keyboard and
+       then dismissed it within a second, making both fields impossible to fill.
+
+       The clock keeps ticking either way; only the region being typed into is
+       left alone, and it re-renders as soon as focus leaves. */
+    if (q('#sheet-entries').classList.contains('on') && !holdsFocus('#sheet-entries')) renderEntriesSheet();
+    if (q('#sheet-team').classList.contains('on') && !holdsFocus('#sheet-team')) renderTeamSheet();
   } catch (e) { /* never let a render error stop the clock */ }
 }
 
