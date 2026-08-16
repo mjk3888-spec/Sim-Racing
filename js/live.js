@@ -428,7 +428,16 @@ function liveRenderPeers() {
     : 'No other device connected';
 }
 
+/* An installed iOS app has its own storage, separate from the Safari tab it was
+   installed from, so it starts with no team key and syncs nothing. Saying so is
+   the difference between "this is broken" and "tap here once". */
+function liveRenderJoinBanner() {
+  const b = el('join-banner');
+  if (b) b.style.display = LIVE_KEY ? 'none' : 'flex';
+}
+
 function liveRenderPanel() {
+  liveRenderJoinBanner();
   const inp = el('live-key-input');
   if (inp && LIVE_KEY && inp.value.trim().toLowerCase() !== LIVE_KEY) inp.value = LIVE_KEY;
   const disp = el('live-key-disp');
@@ -454,7 +463,7 @@ function liveInit() {
   const key = fromLink || stored;
   const inp = el('live-key-input');
   if (inp && key) inp.value = key;
-  if (!key) { liveSetStatus('off', 'Offline'); return; }
+  if (!key) { liveSetStatus('off', 'Offline'); liveRenderJoinBanner(); return; }
   if (fromLink && fromLink !== stored) {
     LIVE_KEY = fromLink;
     localStorage.setItem(LIVE_KEY_STORE, LIVE_KEY);

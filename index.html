@@ -122,6 +122,19 @@
   <div class="tab"     data-action="nav" data-page="goals">Goals &amp; Checklists</div>
 </div>
 
+<!-- iOS gives an installed home-screen app its OWN storage, completely separate
+     from Safari. So installing the app produces a blank copy that shares nothing
+     with the browser tab it was installed from, which reads as "it isn't
+     syncing" when in fact it was never joined to the team. Without this banner
+     the app just sits there saying NO EVENT with no explanation. -->
+<div id="join-banner" style="display:none">
+  <div>
+    <strong>This copy is not connected to your team.</strong>
+    <span>Installing to the Home Screen creates a fresh copy with its own storage. Connect it once and it will stay in step.</span>
+  </div>
+  <button class="btn gn" data-action="nav" data-page="config">Connect</button>
+</div>
+
 <div id="main">
 
 <div id="page-ops" class="page on">
