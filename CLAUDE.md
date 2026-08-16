@@ -6,6 +6,42 @@ memory and this project has decisions that are not obvious from the code.
 Owner: Michael (mjk3888-spec). Team: Wildthings Racing, iRacing endurance.
 Repo: github.com/mjk3888-spec/Sim-Racing
 Live: https://mjk3888-spec.github.io/Sim-Racing/
+Sync backend: https://luminary-sync.mjk3888.workers.dev
+
+---
+
+## Right now (2026-08-16, build 2026-08-16.1)
+
+Everything below is committed, pushed and live. Nothing is half-finished.
+
+**Just landed:** live sync. Phone and PC share one event through a Cloudflare
+Durable Object. **Awaiting Michael's real two-device test on an iPhone.** If he
+reports a problem, get him to check the build number at the foot of the Config
+tab FIRST: an installed PWA serves the previous version on the first load after
+a deploy and needs opening twice. That has already caused two false bug reports.
+
+**Nothing on the phone or PC is precious.** Michael has confirmed there is no
+event data worth preserving, so migrations and destructive tests are safe. Ask
+again before assuming that still holds.
+
+**Next, in his stated priority order:**
+
+1. Readability. Measured, not started. See the Verification standard notes: the
+   whole type ramp renders at roughly 40% of intended size because `rem`
+   resolves against the 16px default. `html{font-size:21px}` is the one-line
+   lever and is tested safe; 23px starts breaking layouts. Two follow-ups
+   needed: the header event name truncates and the nav bar overflows further.
+2. Phase 2, real multi-car entries. Paths are already namespaced `e/<id>/...`
+   so this is additive.
+3. Phase 4, home screen and entry switcher, with the mobile redesign folded in.
+   Do not redesign before this exists or it gets done twice.
+4. Step 6, ES modules. Unblocked but lowest value to him.
+
+**A caution learned the hard way this session:** every automated test here runs
+in Chromium on Windows. That is not an iPhone. A car picker built with
+`<datalist>` passed every test and was completely broken on iOS. When shipping
+anything the user touches, state the iOS risk explicitly rather than implying
+the tests cover it.
 
 ---
 
