@@ -330,8 +330,27 @@
         <div style="font-family:var(--mono);font-size:0.66rem;color:var(--text-mid);margin-bottom:12px;text-transform:none;line-height:1.6">
           Keeps this device in step with your other devices and your teammates, live. Tap <strong>New Team</strong> once, then <strong>Copy Invite Link</strong> and open that link on your phone. Anyone with the link can view and edit, so treat it like a key.
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input id="live-key-input" style="flex:1;min-width:180px;text-transform:none" placeholder="Team key" autocomplete="off" spellcheck="false">
+        <div class="field" style="margin-bottom:10px">
+          <label>Team Name</label>
+          <input id="team-name-input" style="text-transform:none" placeholder="Wildthings Racing" maxlength="60" data-action="team.name" autocomplete="off">
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>Team Logo (optional)</label>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div id="team-logo-preview" style="min-height:46px;display:flex;align-items:center"></div>
+            <label class="btn bl" style="cursor:pointer;margin:0">
+              Choose Image
+              <input type="file" id="team-logo-file" accept="image/*" style="display:none" data-action="team.logo">
+            </label>
+            <button class="btn rd" data-action="team.logo-clear">Remove</button>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:6px">
+          <label>Team Key — type your own, or generate one</label>
+          <input id="live-key-input" style="text-transform:none" placeholder="e.g. wildthings-daytona-2026" autocomplete="off" spellcheck="false" data-action="team.key-typed">
+        </div>
+        <div id="live-key-warn" style="display:none;font-family:var(--mono);font-size:var(--fs-sm);color:var(--yellow);text-transform:none;margin-bottom:8px;line-height:1.5"></div>
+        <div class="brow" style="gap:8px">
           <button class="btn gn" data-action="live.connect">Connect</button>
         </div>
         <div class="brow" style="gap:8px;margin-top:8px">

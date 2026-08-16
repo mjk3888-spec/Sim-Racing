@@ -10,10 +10,11 @@
 
 // INIT
 function loadState(){
-  try{const r=localStorage.getItem('lum4');if(r){const p=JSON.parse(r);S={...S,...p};if(!S.drivers||!S.drivers.length)resetDrivers();if(!S.checks)S.checks=JSON.parse(JSON.stringify(DEFAULT_CHECKS));if(!S.settingCols)S.settingCols=JSON.parse(JSON.stringify(DC));if(!S.goals)S.goals=[];if(!S.tnotes)S.tnotes=[];if(!S.schMeta)S.schMeta={};if(!S.raceLog)S.raceLog=[];if(!S.config.sim)S.config.sim='';}}catch(e){}
+  try{const r=localStorage.getItem('lum4');if(r){const p=JSON.parse(r);S={...S,...p};if(!S.drivers||!S.drivers.length)resetDrivers();if(!S.checks)S.checks=JSON.parse(JSON.stringify(DEFAULT_CHECKS));if(!S.settingCols)S.settingCols=JSON.parse(JSON.stringify(DC));if(!S.goals)S.goals=[];if(!S.tnotes)S.tnotes=[];if(!S.schMeta)S.schMeta={};if(!S.raceLog)S.raceLog=[];if(!S.team)S.team={name:'',logo:''};if(!S.config.sim)S.config.sim='';}}catch(e){}
   ensureEntries();
   buildHourOpts();buildTimeDDs();
   populateConfig();buildCatalogLists();showBuildStamp();
+  try{renderTeamIdentity();}catch(e){}
   renderDriverList();renderSettingsTable();
   renderChecklists();renderGoals();renderGoalsDash();renderTNotes();
   buildAvail();renderSchedule();loadSchMeta();updateDash();checkPrereqs();

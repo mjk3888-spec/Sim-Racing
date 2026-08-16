@@ -81,6 +81,10 @@ function livePathsForState(st, id, p) {
    from S; the rest from their parked state. */
 function livePaths() {
   const p = {};
+  // Team-level, shared by every entry: the name and logo belong to the TEAM,
+  // not to a car, so they sit outside the e/<id>/ namespace.
+  p['team/name'] = (S.team && S.team.name) || '';
+  p['team/logo'] = (S.team && S.team.logo) || '';
   const ids = Object.keys(S.entries || {});
   if (!ids.length) return livePathsForState(currentEntryFields(), LIVE_ENTRY, p);
   ids.forEach(id => {
@@ -98,6 +102,13 @@ function livePaths() {
    when only the car list changed. */
 function liveApplyPath(path, value) {
   const bits = path.split('/');
+
+  // team/<field> — the team's own name and logo, shared across every car
+  if (bits[0] === 'team' && bits[1]) {
+    if (!S.team) S.team = { name: '', logo: '' };
+    S.team[bits[1]] = value || '';
+    return 'team';
+  }
 
   // entries/<id>/<field> — the car list itself
   if (bits[0] === 'entries' && bits[1] && bits[2]) {
@@ -221,7 +232,7 @@ function liveScheduleRender(kinds) {
       try { renderSchedule(); buildAvail(); loadSchMeta(); } catch (e) {}
       try { renderStatusLog(); checkPrereqs(); updateDash(); } catch (e) {}
       // Car list and switcher, cheap and always worth keeping current.
-      try { updateEntryLabel(); if (el('entries-overlay').classList.contains('on')) renderEntries(); } catch (e) {}
+      try { renderTeamIdentity(); updateEntryLabel(); if (el('entries-overlay').classList.contains('on')) renderEntries(); } catch (e) {}
       _lp();
     } finally { _liveApplying = false; }
     kinds.clear();
@@ -438,6 +449,7 @@ function liveRenderJoinBanner() {
 
 function liveRenderPanel() {
   liveRenderJoinBanner();
+  renderTeamIdentity();
   const inp = el('live-key-input');
   if (inp && LIVE_KEY && inp.value.trim().toLowerCase() !== LIVE_KEY) inp.value = LIVE_KEY;
   const disp = el('live-key-disp');
@@ -472,4 +484,108 @@ function liveInit() {
   }
   liveRenderPanel();
   liveOpenSocket();
+}
+
+/* ---------- team identity: name and logo ---------- */
+
+/* The team name and logo are TEAM-level, shared by every car and every
+   teammate, so they sync under team/ rather than inside an entry. */
+function saveTeamName() {
+  if (!S.team) S.team = { name: '', logo: '' };
+  S.team.name = (gv('team-name-input') || '').slice(0, 60);
+  persist();
+  renderTeamIdentity();
+}
+
+/* Uploaded logos are downscaled and re-encoded before storage. A photo straight
+   off a phone is several megabytes, which would blow past both the sync
+   message limit and the localStorage quota. 512px is far more than the header
+   or splash ever needs. */
+const TEAM_LOGO_MAX_PX = 512;
+const TEAM_LOGO_MAX_BYTES = 90 * 1024;
+
+function onTeamLogoPicked(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { alert('That is not an image file.'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onerror = () => { alert('Could not read that file.'); input.value = ''; };
+  reader.onload = () => {
+    const img = new Image();
+    img.onerror = () => { alert('That image could not be read. Try a PNG or JPEG.'); input.value = ''; };
+    img.onload = () => {
+      const scale = Math.min(1, TEAM_LOGO_MAX_PX / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const cx = c.getContext('2d');
+      cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+      cx.drawImage(img, 0, 0, w, h);
+      // PNG keeps transparency, which most team logos rely on. Fall back to
+      // JPEG only if PNG comes out too big to sync.
+      let out = c.toDataURL('image/png');
+      if (out.length > TEAM_LOGO_MAX_BYTES) out = c.toDataURL('image/jpeg', 0.86);
+      if (out.length > TEAM_LOGO_MAX_BYTES) {
+        alert('That image is too detailed to sync. Try a simpler or smaller logo.');
+        input.value = '';
+        return;
+      }
+      if (!S.team) S.team = { name: '', logo: '' };
+      S.team.logo = out;
+      persist();
+      renderTeamIdentity();
+      input.value = '';
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearTeamLogo() {
+  if (!S.team) S.team = { name: '', logo: '' };
+  if (!S.team.logo) return;
+  if (!confirm('Remove the team logo and go back to the Luminary mark?')) return;
+  S.team.logo = '';
+  persist();
+  renderTeamIdentity();
+}
+
+function renderTeamIdentity() {
+  const t = S.team || { name: '', logo: '' };
+  const inp = el('team-name-input');
+  if (inp && document.activeElement !== inp) inp.value = t.name || '';
+
+  const brand = document.querySelector('.s-brand img');
+  if (brand) {
+    const want = t.logo || 'assets/logo.svg';
+    if (brand.getAttribute('src') !== want) brand.setAttribute('src', want);
+    brand.alt = t.name || 'LUMINARY MANAGER';
+  }
+  const prev = el('team-logo-preview');
+  if (prev) {
+    prev.innerHTML = t.logo
+      ? '<img src="' + t.logo + '" alt="" style="max-height:46px;max-width:150px;display:block">'
+      : '<span style="font-family:var(--mono);font-size:var(--fs-sm);color:var(--muted);text-transform:none">Using the Luminary mark</span>';
+  }
+  const nameSlot = el('team-name-display');
+  if (nameSlot) {
+    nameSlot.textContent = t.name || '';
+    nameSlot.style.display = t.name ? '' : 'none';
+  }
+}
+
+/* A custom key is the user's decision, made with the trade-off explained. This
+   only flags the obviously trivial ones and never blocks. */
+function liveKeyWarning() {
+  const w = el('live-key-warn');
+  if (!w) return;
+  const k = ((el('live-key-input') || {}).value || '').trim().toLowerCase();
+  const weak = k && (k.length < 12 || /^(test|team|demo|luminary|racing|wildthings|admin|password)$/.test(k));
+  w.style.display = weak ? 'block' : 'none';
+  if (weak) {
+    w.textContent = k.length < 12
+      ? 'Short keys are easy to guess. Anyone who guesses it can edit your race.'
+      : 'That is an easy key to guess. Anyone who guesses it can edit your race.';
+  }
 }

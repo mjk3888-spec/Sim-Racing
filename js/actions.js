@@ -109,6 +109,12 @@ const ACTIONS = {
   'live.connect':    { run: () => liveConnect() },
   'live.disconnect': { run: () => liveDisconnect() },
   'live.new':        { run: () => liveNewTeam() },
+  'team.name':       { on: 'input',  run: () => saveTeamName() },
+  'team.logo':       { on: 'change', run: (e, t) => onTeamLogoPicked(t) },
+  'team.logo-clear': { run: () => clearTeamLogo() },
+  // Custom keys are allowed by decision. This only flags obviously guessable
+  // ones as you type; it never blocks.
+  'team.key-typed':  { on: 'input',  run: () => liveKeyWarning() },
   'live.invite':     { run: () => liveCopyInvite() },
 
 
