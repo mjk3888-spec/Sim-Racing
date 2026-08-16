@@ -9,7 +9,7 @@
    they no-op harmlessly here. v1's boot file (main.js) is deliberately NOT
    loaded, because this file is the boot sequence instead. */
 
-const V2_BUILD = '2026-08-16.16';
+const V2_BUILD = '2026-08-16.17';
 
 /* ---------- helpers ---------- */
 const q = s => document.querySelector(s);
@@ -181,7 +181,11 @@ function renderEntriesSheet() {
       + '<div class="nm"><b>' + s.name + '</b><span>'
       + ([s.car, s.track].filter(Boolean).join(' · ') || 'Not set up')
       + (s.driver ? ' · ' + s.driver : '') + (s.remaining ? ' · ' + s.remaining : '')
-      + '</span></div></div>';
+      + '</span></div>'
+      // v1 could delete a car and v2 could not. Nested inside the switch row, so
+      // nearest-ancestor resolution is what stops a delete also switching to it.
+      + '<button class="ecard-del" data-v2act="entry-del" data-id="' + id + '" title="Delete car">✕</button>'
+      + '</div>';
   }).join('');
 }
 
@@ -272,7 +276,10 @@ function v2Init() {
       const t = nav.dataset.v2;
       if (t === 'close') { closeSheets(); return; }
       if (t === 'entries') { openSheet('entries'); renderEntriesSheet(); return; }
-      if (t === 'team' || t === 'team-setup') { openSheet('team'); renderTeamSheet(); return; }
+      // 'team' is the bottom-nav SCREEN. The sync sheet is 'team-sync'.
+      // These shared one name, so tapping Team opened the sheet and the Team
+      // screen could never be reached at all.
+      if (t === 'team-sync' || t === 'team-setup') { openSheet('team'); renderTeamSheet(); return; }
       v2Go(t); return;
     }
     const a = e.target.closest('[data-v2act]');
@@ -288,6 +295,7 @@ function v2Init() {
     else if (act === 'demo') { loadDemoEvent(); v2Go('race'); }
     else if (act === 'entry-go') { switchEntry(a.dataset.id); closeSheets(); v2Render(); }
     else if (act === 'entry-new') { addEntry(); renderEntriesSheet(); v2Render(); }
+    else if (act === 'entry-del') { deleteEntry(a.dataset.id); renderEntriesSheet(); v2Render(); }
     else if (act === 'invite') liveCopyInvite();
     else if (act === 'leave') { liveDisconnect(); renderTeamSheet(); v2Render(); }
     else if (act === 'join') {

@@ -238,3 +238,51 @@ button.wide.ghost{background:var(--s2);color:var(--tx2);}
 .feed-del{background:none;border:0;color:var(--tx3);font-size:var(--f3);
   padding:4px 8px;cursor:pointer;flex-shrink:0;line-height:1;border-radius:8px;}
 .feed-del:active{background:var(--s3);color:var(--red);}
+
+/* ============================================================================
+   BRAND COLOUR SYSTEM
+   ----------------------------------------------------------------------------
+   Michael's marque has three accents and they MEAN something:
+     Blue   = Racing
+     Yellow = Engineering
+     Orange = Performance
+
+   That maps onto v2's three destinations almost exactly, so the navigation now
+   carries the brand rather than decorating with it:
+
+     RACE  -> Blue    it is the racing screen
+     PLAN  -> Orange  pace, fuel and strategy is performance
+     TEAM  -> Yellow  roster, event and setup is engineering
+
+   This is a better rule than my original "one accent". I had reduced everything
+   to volt because in v1 the colours were applied at random and meant nothing.
+   Given a real meaning, using them is stronger than suppressing them: the
+   colour of the screen tells you where you are before you read a word.
+
+   Volt stays the identity: the logo, the countdown, and anything urgent. */
+:root{
+  --racing:#8EC7E6;
+  --engineering:#DFFF00;
+  --performance:#FF8A1C;
+}
+
+/* Each screen tints its own section headings and active nav item. */
+#screen-race  .sect-title{color:var(--racing);}
+#screen-plan  .sect-title{color:var(--performance);}
+#screen-team  .sect-title{color:var(--engineering);}
+
+#v2-nav button[data-v2="race"].on{color:var(--racing);}
+#v2-nav button[data-v2="race"].on::before{background:var(--racing);}
+#v2-nav button[data-v2="plan"].on{color:var(--performance);}
+#v2-nav button[data-v2="plan"].on::before{background:var(--performance);}
+#v2-nav button[data-v2="team"].on{color:var(--engineering);}
+#v2-nav button[data-v2="team"].on::before{background:var(--engineering);}
+
+/* A thin brand rule under the header: the three accents in marque order. */
+#v2-head{border-bottom:2px solid transparent;
+  border-image:linear-gradient(90deg,var(--racing) 0 33%,var(--engineering) 33% 66%,var(--performance) 66% 100%) 1;}
+
+/* Deleting a car, which v2 was missing entirely. */
+.ecard-del{background:none;border:0;color:var(--tx3);font-size:var(--f3);
+  padding:6px 10px;cursor:pointer;flex-shrink:0;border-radius:8px;line-height:1;}
+.ecard-del:active{background:var(--s3);color:var(--red);}
