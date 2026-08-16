@@ -21,7 +21,7 @@
    GitHub Pages serves the site from a project subpath (user.github.io/repo/).
    ========================================================================== */
 
-const CACHE_VERSION = '2026-08-16.15';
+const CACHE_VERSION = '2026-08-16.16';
 const SHELL_CACHE = 'luminary-shell-' + CACHE_VERSION;
 const RUNTIME_CACHE = 'luminary-runtime-' + CACHE_VERSION;
 
@@ -53,9 +53,7 @@ const SHELL = [
   './js/actions.js',
   './js/main.js',
   './js/pwa.js',
-  './v2/index.html',
-  './v2/v2.css',
-  './v2/v2.js',
+  // v2 is deliberately absent: it bypasses this worker entirely (see fetch).
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
@@ -177,6 +175,24 @@ async function handleRuntimeAsset(event) {
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return; // sync POSTs etc. always hit the network
+
+  /* /v2/ IS DELIBERATELY NOT CACHED AT ALL.
+
+     Two bugs made v2 impossible to update, and both come from this worker being
+     written when only one page existed:
+
+     1. handleNavigation() answers EVERY navigation in scope with the cached
+        './index.html', which is v1's. Navigating to /v2/ therefore served v1's
+        markup under the v2 URL.
+     2. handleSameOriginAsset() is cache-first with NO revalidation, so once
+        v2.js was cached it was frozen until the whole cache version changed.
+
+     Together, closing and reopening the app could never pick up a new v2. While
+     v2 is an actively changing comparison build, correctness beats offline
+     support, so it bypasses the worker entirely and always comes from the
+     network. If v2 ever becomes the main app this needs proper per-page
+     handling, not this shortcut. */
+  if (new URL(request.url).pathname.includes('/v2/')) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(handleNavigation(event));

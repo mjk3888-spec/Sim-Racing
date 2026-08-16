@@ -9,7 +9,7 @@
    they no-op harmlessly here. v1's boot file (main.js) is deliberately NOT
    loaded, because this file is the boot sequence instead. */
 
-const V2_BUILD = '2026-08-16.15';
+const V2_BUILD = '2026-08-16.16';
 
 /* ---------- helpers ---------- */
 const q = s => document.querySelector(s);
