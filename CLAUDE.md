@@ -10,47 +10,84 @@ Sync backend: https://luminary-sync.mjk3888.workers.dev
 
 ---
 
-## Right now (2026-08-16, build 2026-08-16.2)
+## Right now (2026-08-16, build 2026-08-16.19)
 
 Everything below is committed, pushed and live. Nothing is half-finished.
 
-**Live sync works and has been confirmed on Michael's real iPhone and PC**,
-both directions, on the deployed site. Not just in tests.
+**There are TWO apps in this repo and both are live.**
 
-**Just landed and NOT yet confirmed by him on a phone:** the corrected type
-scale, the nav bar wrapping to two rows, multiple cars with the switcher, and
-the removal of the old Google Sheet sync.
+| | | |
+|---|---|---|
+| **v1** | `/` | the original six-tab app. Untouched, still works, 72/72 tests |
+| **v2** | `/v2/` | three destinations, phone-first. Now has EVERY v1 function |
 
-**If he reports a problem, check the build number at the foot of the Config tab
-FIRST.** An installed PWA serves the previous version on the first load after a
-deploy and needs opening twice. That has already caused two false bug reports.
+v2 is not a prototype any more. It is the candidate replacement, awaiting
+Michael's verdict on a real phone.
+
+**The architecture that makes two apps affordable, and the thing not to break:**
+v2 uses **v1's component markup** (identical element ids and `data-action`
+attributes) inside v2's layout, and loads the same `js/*.js`. So v1's logic runs
+in v2 unchanged and stays covered by v1's tests. `v2/components.css` restyles
+that shared vocabulary. Only the Pit Wall screen and the navigation are new
+code. **If you find yourself writing a v2 copy of a function that already exists
+in `js/`, stop: reuse the id instead.**
+
+v2 does NOT load `js/main.js`. Its boot is `v2LoadState()` + `v2Init()` in
+`v2/v2.js`. Calling a main.js function from v2 throws and silently aborts boot,
+which presents as a stuck splash screen and a dead clock. That has happened.
+
+**v2's three destinations, and why they are named that:**
+Pit Wall (blue/Racing) is live race only. Strategy (orange/Performance) is the
+schedule and every number feeding it. Team (yellow/Engineering) is people, the
+event and one-time setup. Michael approved the free hand on naming; he has not
+yet said whether the Strategy/Team split matches how he works. **That split is
+the main open design question.**
+
+**Specialist features are present but folded**, via
+`data-collapse-default="closed"` in `js/collapse.js`. A stored choice always
+beats the default, so opening one keeps it open. That is the mechanism for
+"available to teams who need it, hidden from those who don't". Use it rather
+than deleting anything.
+
+**If he reports a problem, check the build number FIRST** (foot of v1's Config
+tab, foot of v2's Team screen). An installed PWA serves the previous version on
+the first load after a deploy and needs opening twice. Two false bug reports so
+far. Note `/v2/` bypasses the service worker entirely so it should NOT have this
+problem; v1 still does.
 
 **Nothing on the phone or PC is precious.** Michael has confirmed there is no
 event data worth preserving, so migrations and destructive tests are safe. Ask
 again before assuming that still holds.
 
-**One open question:** my screenshot tool renders the entries overlay at
-roughly 45% scale while the DOM measures it correctly (overlay 430x932, modal
-398x900 in a 430x932 viewport). Measured twice. Treated as a capture artifact,
-not a layout bug, but if Michael says the car list looks wrong on his phone,
-believe him over the measurement and start there.
+**Known gap, stated not hidden:** v2 above 760px is a centred 760px column with
+four tiles across. That is readable on a PC, not a real desktop layout. He wants
+this dual purpose PC and mobile, so a genuine wide layout is unbuilt work.
+
+**Awaiting from Michael:** a real-phone and real-PC pass on v2, and his call on
+whether v2 replaces v1 or they coexist.
 
 **Next, in his stated priority order:**
 
-1. Confirm the above on a real phone.
-2. The remaining readability work: Config, Schedule and Availability still need
-   sideways scrolling. Decide WITH him which stint columns matter on a phone
-   rather than cramming all 16 in.
+1. His verdict on v2.
+2. A real desktop layout for v2 if v2 wins.
 3. Race Lock and a proper offline queue (Phase 5).
 4. Team-level driver library: `lum_drivers` is still per-device and should move
    to team level now that entries exist.
 5. Step 6, ES modules. Unblocked but lowest value to him.
 
-**A caution learned the hard way this session:** every automated test here runs
-in Chromium on Windows. That is not an iPhone. A car picker built with
-`<datalist>` passed every test and was completely broken on iOS. When shipping
-anything the user touches, state the iOS risk explicitly rather than implying
-the tests cover it.
+**A caution learned the hard way:** every automated test here runs in Chromium
+on Windows. That is not an iPhone. A car picker built with `<datalist>` passed
+every test and was completely broken on iOS. When shipping anything the user
+touches, state the iOS risk explicitly rather than implying the tests cover it.
+
+**Four bugs the v2 build surfaced, all found by tests, none by Michael:** the
+main.js call above; a splash fade started only from `requestAnimationFrame`,
+which does not fire in a backgrounded tab and could leave the logo up forever
+(v1 had the same latent hazard, both now have a hard fallback); brand colour CSS
+still targeting the old screen names; and Fair Share rendering nothing because
+its code guards on `#fs-card`, which v2 lacked. The pattern worth remembering:
+**v2 keeps exposing latent v1 bugs, because it exercises v1's functions in an
+environment v1 never had.**
 
 ---
 
